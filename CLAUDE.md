@@ -12,9 +12,11 @@ differences:
    browser for the phone's position and shows weather wherever you are.
 2. **No alternative weather stations** — wa2's three nearby-station chips
    (Kurevere / Lääne-Nigula / Haapsalu) are removed.
+3. **No electricity-price card** — wa2's "Elektri hind" (Nord Pool spot)
+   card was removed, and the radar moved up to sit directly below Hetkeilm.
 
-Everything else (forecast, radar, sun/moon, pollen, aurora, electricity
-price, warnings, the whole visual design) is inherited from wa2.
+Everything else (forecast, radar, sun/moon, pollen, aurora, warnings, the
+whole visual design) is inherited from wa2.
 
 - **Repo:** https://github.com/indrekraag/wa3
 - **Live:** https://indrekraag.github.io/wa3/
@@ -66,42 +68,34 @@ Geolocation requires a **secure context** — GitHub Pages (https) and
 `http://localhost` both qualify; a plain `http://<LAN-IP>` does **not**,
 so on-phone LAN testing won't get a GPS fix (it'll show the fallback).
 
-## Country-specific cards (EE↔FI auto-switch)
+## Country-specific warnings (EE↔FI auto-switch)
 
 The forecast, radar, pollen, aurora and astronomy are global and follow
-`CONFIG.lat/lng` anywhere. Two cards are **national**, so they follow the
-phone's **country** instead:
-
-- **Warnings row** — MeteoAlarm warnings for the current country.
-- **Elektri hind** — the Nord Pool price **zone** for the current country.
+`CONFIG.lat/lng` anywhere. The **warnings row** is **national**, so it
+follows the phone's **country** instead:
 
 `reverseGeocode()` reads the `countryCode` and calls `setCountry(cc)`,
 which stores `CONFIG.country` (persisted in `wx.geo`) and, on a change,
-re-renders the price from cache + refetches warnings. `zoneForCountry()`
-maps country → Nord Pool zone; `renderNps()` picks `data.zones[zone]`
-(falls back to top-level EE for old snapshots); `renderWarnings()` filters
-`warnings[]` by `country` and translates the event via `translateWarning()`
-(exact `WARN_EVENT_ET` table for EE's "X Level N" taxonomy, then a keyword
-fallback for Finland's free-form English event strings, then raw text).
+refetches warnings. `renderWarnings()` filters `warnings[]` by `country`
+and translates the event via `translateWarning()` (exact `WARN_EVENT_ET`
+table for EE's "X Level N" taxonomy, then a keyword fallback for Finland's
+free-form English event strings, then raw text).
 
 **Coverage:** the bridge fetches CAP feeds only for **EE + FI**
 (`METEOALARM_FEEDS` in `fetch_emhi.py`) and the client's `WARN_COUNTRIES`
 allowlist must match — for any other country the warnings row shows a
 neutral "Hoiatuste andmed puuduvad" (no data), never a false green
-all-clear. Elering serves EE/FI/LV/LT, so LV/LT get correct prices too;
-anywhere else the price falls back to the EE zone and is honestly labelled
-"Eesti". VAT per zone: EE 24, FI 25.5, LV/LT 21 (`ZONE_VAT` in
-`fetch_nps.py`).
+all-clear.
 
 ## What the app shows
 
 All in Estonian, top-down: warning row → **Hetkeilm** (current: big temp,
-condition, feels-like/frost/dew pills, 6 measurement tiles) → 24h forecast
+condition, feels-like/frost/dew pills, 6 measurement tiles) → **radar**
+(satellite/map, zoom presets, sun/moon/wind overlays) → 24h forecast
 (temp/rain/wind bars) → 7-day strip (tap a day → detail bottom sheet) →
-radar (satellite/map, zoom presets, sun/moon/wind overlays) → Päike → Kuu
-→ Õietolm (pollen) → Virmalised (aurora) → Elektri hind (electricity spot
-price). See wa2's history for the design details — the render layer is
-identical.
+Päike → Kuu → Õietolm (pollen) → Virmalised (aurora). (wa2's Elektri hind
+card was removed; the radar was moved up to just below Hetkeilm.) See wa2's
+history for the design details — the render layer is otherwise identical.
 
 ## Data sources (unchanged from wa2 except as noted)
 
@@ -117,16 +111,13 @@ identical.
 - **MeteoAlarm** Estonia **+ Finland** CAP feeds → warnings, each tagged
   with its `country`. CORS-closed → GitHub Actions bridge. (wa2 was
   Estonia-only, Lääne county; wa3 fetches both nations, all counties.)
-- **Elering** Nord Pool spot price → `data/nps.json`, **all four zones**
-  (EE/FI/LV/LT) under `zones`, each with its own `vat_pct`. CORS-closed →
-  same bridge. Converted to snt/kWh incl VAT client-side.
 - **Local astronomy** — sun/moon rise-set + alt/az computed in-browser.
 
-**Removed vs wa2:** the tarktee Kurevere road-station fetch and the EMHI
-Lääne-Nigula/Haapsalu station fetch (and their three UI chips). The EMHI
-GitHub-Actions bridge still runs — it feeds **warnings** and (via
-`fetch_nps.py`) the **electricity price** — but its station data is no
-longer displayed.
+**Removed vs wa2:** the tarktee Kurevere road-station fetch, the EMHI
+Lääne-Nigula/Haapsalu station fetch (and their three UI chips), and the
+whole **Elering / electricity-price** feed (card + `fetch_nps.py` + the
+workflow's nps step). The EMHI GitHub-Actions bridge still runs — it now
+feeds **only warnings** (its EMHI station data is fetched but unused).
 
 ## Architecture
 
@@ -137,19 +128,18 @@ longer displayed.
 ├── sw.js                       # service worker (stale-while-revalidate shell)
 ├── icons/                      # PNG icons + generate_icons.py (PIL)
 ├── scripts/
-│   ├── fetch_emhi.py           # bridge: EMHI stations (unused by UI) + all-EE CAP warnings → emhi.json
-│   └── fetch_nps.py            # bridge: Elering Nord Pool spot price → nps.json
+│   └── fetch_emhi.py           # bridge: EMHI stations (unused by UI) + EE/FI CAP warnings → emhi.json
 ├── screenshots.py              # Playwright multi-viewport screenshotter
-├── .github/workflows/emhi.yml  # cron */15 + dispatch + push; force-pushes emhi.json+nps.json to 'data' branch
+├── .github/workflows/emhi.yml  # cron */15 + dispatch + push; force-pushes emhi.json to 'data' branch
 └── CLAUDE.md                   # this file
 ```
 
 **Data flow:** SW pre-caches the shell; `hydrateFromCache()` renders last
 cached data on load; `fetch*` run in parallel; every response is cached in
 `localStorage` (`wx.*`, 6 h TTL); each source re-fetches on its own timer.
-The MeteoAlarm/Elering bridge runs in GitHub Actions every 15 min and
-force-pushes a single rolling commit to a `data` orphan branch; the PWA
-reads it via `raw.githubusercontent.com/indrekraag/wa3/data/…` (CORS-open).
+The MeteoAlarm bridge runs in GitHub Actions every 15 min and force-pushes
+a single rolling commit to a `data` orphan branch; the PWA reads it via
+`raw.githubusercontent.com/indrekraag/wa3/data/…` (CORS-open).
 The workflow uses `${{ github.repository }}`, so it targets wa3
 automatically once pushed — no repo name is hardcoded.
 
@@ -178,9 +168,8 @@ Playwright screenshots: `python3 screenshots.py` (needs a `.venv` with
 playwright; not committed). To test the live-GPS path headlessly, grant a
 mock geolocation + permission in the Playwright context.
 
-Regenerate `data/emhi.json` / `data/nps.json` locally:
-`python3 scripts/fetch_emhi.py` / `python3 scripts/fetch_nps.py` (both
-gitignored on main; live copies live on the `data` branch).
+Regenerate `data/emhi.json` locally: `python3 scripts/fetch_emhi.py`
+(gitignored on main; the live copy lives on the `data` branch).
 
 Orphan-ID checker (run after any HTML/JS edit — a `byId('x')` on a missing
 element throws and halts all later JS):
@@ -219,18 +208,18 @@ by the Actions workflow and is never merged to main.
 
 **Status:** Fork from wa2 created 2026-07-05. Live-GPS wiring done, three
 alt-station chips removed, raw data URLs repointed to `indrekraag/wa3`,
-rebranded to "Ilmaradar". Then the **EE↔FI auto-switch** was added
-(warnings + electricity price follow the phone's country) — see
-"Country-specific cards" above. A 4-lens adversarial review found 6 real
-bugs, all fixed: durable `wx.geo.country` persistence, `translateWarning`
-thunder-vs-storm ordering, neutral "no data" warnings for uncovered
-countries, and an honest price-market label on EE fallback.
+rebranded to "Ilmaradar". Then the **EE↔FI warnings auto-switch** was added
+(warnings follow the phone's country) — see "Country-specific warnings"
+above; a 4-lens adversarial review found 6 real bugs, all fixed (durable
+`wx.geo.country`, `translateWarning` thunder-vs-storm order, neutral "no
+data" warnings for uncovered countries, honest fallback labels). Finally
+the **Elektri hind card was removed** (UI + `fetch_nps.py` + workflow nps
+step) and the **radar moved up to directly below Hetkeilm**.
 
-Verified end-to-end (Playwright, mock GPS): EE/FI/SE all render correctly
-with 0 console errors — EE→Eesti·24%, FI→Soome·25.5%, SE→neutral warnings
-+ Eesti-labelled EE price; `translateWarning` unit cases all pass; both
-inline scripts `node --check` OK; orphan-ID check clean; bridge scripts run
-live producing correct multi-zone `nps.json` + country-tagged `emhi.json`.
+Verified end-to-end (Playwright, mock GPS, 0 console errors): radar now
+renders directly under Hetkeilm, no price card, warnings still translate
+and switch EE↔FI; `node --check` + orphan-ID checks clean; `fetch_emhi.py`
+runs live producing country-tagged `emhi.json`; `emhi.yml` YAML valid.
 
 **Next step:** create the GitHub repo `indrekraag/wa3`, push `main`, enable
 GitHub Pages, let the Actions workflow populate the `data` branch, then
@@ -240,5 +229,5 @@ smoke-test on the actual iPhone in Finland (grant location on first load).
 - App name "Ilmaradar" and the icon wordmark ("MADISE") are placeholders —
   rename if desired (icon wordmark lives in `icons/generate_icons.py`).
 - Consider `watchPosition()` if you want it to track while open.
-- To cover more countries: add feeds to `METEOALARM_FEEDS` +
-  `WARN_COUNTRIES`, and (already there) Elering LV/LT zones.
+- To cover more warning countries: add feeds to `METEOALARM_FEEDS` +
+  the client's `WARN_COUNTRIES` allowlist.

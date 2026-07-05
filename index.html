@@ -1847,47 +1847,6 @@ body {
   background: rgba(255,255,255,0.14);
 }
 
-/* ─── Electricity price card ──────────────────────────────────────
- * Reuses the forecast .metric-spark bar system (next-24h hourly bars,
- * current hour highlighted, color-tiered by price). */
-#price-card .card-header { align-items: baseline; }
-.price-now-wrap { display: flex; align-items: baseline; gap: 3px; }
-.price-now-label { font-size: 11px; color: rgba(255,255,255,0.55); margin-right: 2px; }
-.price-now { font-size: 22px; font-weight: 700; line-height: 1; }
-.price-unit { font-size: 11px; color: rgba(255,255,255,0.55); }
-
-/* Gridded price chart: a Y-axis/gridline layer behind a flex row of
- * bars, with an hour axis below. 30px left gutter holds the snt/kWh
- * scale labels. */
-.price-chart { position: relative; height: 96px; margin-top: 12px; padding-left: 30px; }
-.price-grid  { position: absolute; left: 30px; right: 0; top: 0; bottom: 0; pointer-events: none; }
-.price-gridline { position: absolute; left: 0; right: 0; border-top: 1px dashed rgba(255,255,255,0.10); }
-.price-gridline.zero { border-top-color: rgba(255,255,255,0.22); }
-.price-gridline > span {
-  position: absolute; right: calc(100% + 5px); top: 0; transform: translateY(-50%);
-  font-size: 9px; color: rgba(255,255,255,0.45); white-space: nowrap;
-}
-.price-bars { position: absolute; left: 30px; right: 0; top: 0; bottom: 0; display: flex; align-items: flex-end; gap: 3px; }
-.price-bars > span { flex: 1 1 0; min-width: 0; border-radius: 2px 2px 0 0; }
-.price-bars > span.past { opacity: 0.45; }                 /* hours already elapsed */
-.price-bars > span.now { outline: 1.5px solid rgba(255,255,255,0.9); outline-offset: -1px; }
-/* Hour labels: one per bar, flex row aligned under the bars. */
-.price-axis { display: flex; gap: 3px; margin-left: 30px; margin-top: 4px; }
-.price-axis > span { flex: 1 1 0; min-width: 0; text-align: center; font-size: 9px; color: rgba(255,255,255,0.45); }
-.price-axis > span.now { color: rgba(255,255,255,0.92); font-weight: 700; }
-
-.price-foot {
-  display: flex; justify-content: space-between;
-  margin-top: 12px;
-  font-size: 11px; color: rgba(255,255,255,0.6);
-}
-.price-foot b { color: rgba(255,255,255,0.9); font-weight: 600; }
-.price-status {
-  margin-top: 6px;
-  font-size: 10px; color: rgba(255,255,255,0.4);
-  letter-spacing: 0.2px;
-}
-
 
 /* ─── 7-day detail bottom sheet ───────────────────────────────────
  * Tap a day in the 7-day strip → glass bottom sheet, swipe between
@@ -2084,6 +2043,58 @@ body {
 
         </div>
 
+        <!-- RADAR / SATELLIIT MAP ─────────────────────────────────
+             RainViewer public API — past 2h radar + infrared satellite.
+             No API key required. CORS-open tile server. Leaflet from CDN. -->
+        <div class="glass card" id="radar-card">
+          <div class="card-header">
+            <h2 id="radar-card-title">Vihmaradar</h2>
+            <div class="radar-mode-toggle" role="group">
+              <button type="button" class="radar-mode-btn active" data-layer="radar">Radar</button>
+              <a class="radar-mode-btn radar-mode-ext"
+                 href="https://www.ilmateenistus.ee/ilm/ilmavaatlused/satelliidipildid/infrapunane-pilt/"
+                 target="_blank" rel="noopener">Satelliit ↗</a>
+              <a class="radar-mode-btn radar-mode-ext"
+                 href="https://www.ilmateenistus.ee/ilm/prognoosid/mudelprognoosid/eesti/#layers/temp2mv2,temp2mtx,pilvMada,pilvKesk,pilvKorg"
+                 target="_blank" rel="noopener">Pilvisus ↗</a>
+            </div>
+          </div>
+          <!-- Map container — fixed height so it doesn't collapse.
+               The precip legend, zoom presets and the wind/sun SVG
+               overlays live INSIDE this div so they anchor to the map
+               area (Leaflet makes the container position:relative). -->
+          <div id="radar-map" style="height:260px;border-radius:12px;overflow:hidden;background:#0a0a0c;">
+            <!-- Precipitation colour legend — top-right corner -->
+            <div class="precip-legend" id="precip-legend">
+              <div class="precip-legend-title">Sadu</div>
+              <div class="precip-legend-row"><span class="precip-sw" style="background:#3da9f5"></span>Kerge</div>
+              <div class="precip-legend-row"><span class="precip-sw" style="background:#3edd5f"></span>Mõõdukas</div>
+              <div class="precip-legend-row"><span class="precip-sw" style="background:#f5d83a"></span>Tugev</div>
+              <div class="precip-legend-row"><span class="precip-sw" style="background:#e8533b"></span>Väga tugev</div>
+            </div>
+            <!-- Zoom-preset + base-map row — bottom-center -->
+            <div class="zoom-presets" id="zoom-presets">
+              <button class="zoom-btn" onclick="rxZoom(14)">2km</button>
+              <button class="zoom-btn" onclick="rxZoom(10)">10km</button>
+              <button class="zoom-btn" onclick="rxZoom(8)">80km</button>
+              <button class="zoom-btn active" onclick="rxZoom(7)">EE</button>
+              <span class="zoom-sep"></span>
+              <button class="zoom-btn" onclick="rxBaseMap('light')" id="rx-base-light">MAP</button>
+              <button class="zoom-btn active" onclick="rxBaseMap('satellite')" id="rx-base-sat">SAT</button>
+            </div>
+            <!-- SVG overlays injected here by initRadarExtras() -->
+          </div>
+          <!-- Timeline bar -->
+          <div class="radar-timeline">
+            <button class="radar-ctrl-btn" id="radar-play" title="Mängi / Peata">▶</button>
+            <div class="radar-scrub-wrap">
+              <input type="range" class="radar-scrub" id="radar-scrub" min="0" value="0" step="1">
+              <div class="radar-time-label" id="radar-time-label">—</div>
+            </div>
+          </div>
+          <div class="radar-status" id="radar-status">Laen radaripilte…</div>
+        </div>
+
         <!-- 24 H PROGNOOS — the forecast card. Two wide sparkline tiles
              (Sadu + Tuul over the next 24h). Öökülm (tonight's min) moved
              to the comfort pills in Hetkeilm — users think of it as a
@@ -2259,84 +2270,6 @@ body {
           </div>
         </div>
 
-        <!-- RADAR / SATELLIIT MAP ─────────────────────────────────
-             RainViewer public API — past 2h radar + infrared satellite.
-             No API key required. CORS-open tile server. Leaflet from CDN. -->
-        <div class="glass card" id="radar-card">
-          <div class="card-header">
-            <h2 id="radar-card-title">Vihmaradar</h2>
-            <div class="radar-mode-toggle" role="group">
-              <button type="button" class="radar-mode-btn active" data-layer="radar">Radar</button>
-              <a class="radar-mode-btn radar-mode-ext"
-                 href="https://www.ilmateenistus.ee/ilm/ilmavaatlused/satelliidipildid/infrapunane-pilt/"
-                 target="_blank" rel="noopener">Satelliit ↗</a>
-              <a class="radar-mode-btn radar-mode-ext"
-                 href="https://www.ilmateenistus.ee/ilm/prognoosid/mudelprognoosid/eesti/#layers/temp2mv2,temp2mtx,pilvMada,pilvKesk,pilvKorg"
-                 target="_blank" rel="noopener">Pilvisus ↗</a>
-            </div>
-          </div>
-          <!-- Map container — fixed height so it doesn't collapse.
-               The precip legend, zoom presets and the wind/sun SVG
-               overlays live INSIDE this div so they anchor to the map
-               area (Leaflet makes the container position:relative). -->
-          <div id="radar-map" style="height:260px;border-radius:12px;overflow:hidden;background:#0a0a0c;">
-            <!-- Precipitation colour legend — top-right corner -->
-            <div class="precip-legend" id="precip-legend">
-              <div class="precip-legend-title">Sadu</div>
-              <div class="precip-legend-row"><span class="precip-sw" style="background:#3da9f5"></span>Kerge</div>
-              <div class="precip-legend-row"><span class="precip-sw" style="background:#3edd5f"></span>Mõõdukas</div>
-              <div class="precip-legend-row"><span class="precip-sw" style="background:#f5d83a"></span>Tugev</div>
-              <div class="precip-legend-row"><span class="precip-sw" style="background:#e8533b"></span>Väga tugev</div>
-            </div>
-            <!-- Zoom-preset + base-map row — bottom-center -->
-            <div class="zoom-presets" id="zoom-presets">
-              <button class="zoom-btn" onclick="rxZoom(14)">2km</button>
-              <button class="zoom-btn" onclick="rxZoom(10)">10km</button>
-              <button class="zoom-btn" onclick="rxZoom(8)">80km</button>
-              <button class="zoom-btn active" onclick="rxZoom(7)">EE</button>
-              <span class="zoom-sep"></span>
-              <button class="zoom-btn" onclick="rxBaseMap('light')" id="rx-base-light">MAP</button>
-              <button class="zoom-btn active" onclick="rxBaseMap('satellite')" id="rx-base-sat">SAT</button>
-            </div>
-            <!-- SVG overlays injected here by initRadarExtras() -->
-          </div>
-          <!-- Timeline bar -->
-          <div class="radar-timeline">
-            <button class="radar-ctrl-btn" id="radar-play" title="Mängi / Peata">▶</button>
-            <div class="radar-scrub-wrap">
-              <input type="range" class="radar-scrub" id="radar-scrub" min="0" value="0" step="1">
-              <div class="radar-time-label" id="radar-time-label">—</div>
-            </div>
-          </div>
-          <div class="radar-status" id="radar-status">Laen radaripilte…</div>
-        </div>
-
-        <!-- ELEKTRI HIND — Nord Pool day-ahead spot price (EE zone) via the
-             Elering bridge on the 'data' branch. Next-24h hourly bars reuse
-             the forecast sparkline system; current hour is highlighted. -->
-        <div class="glass card" id="price-card">
-          <div class="card-header">
-            <h2>Elektri hind</h2>
-            <div class="price-now-wrap">
-              <span class="price-now-label">Hetkel:</span>
-              <span class="price-now mono" id="price-now">—</span>
-              <span class="price-unit">s/kWh</span>
-            </div>
-          </div>
-          <!-- Chart: Y-axis gridlines layer behind, bars in front, hour
-               axis below. Built by renderNps() (today 00–24, snt/kWh). -->
-          <div class="price-chart">
-            <div class="price-grid" id="price-grid"></div>
-            <div class="price-bars" id="price-spark" aria-hidden="true"></div>
-          </div>
-          <div class="price-axis" id="price-axis"></div>
-          <div class="price-foot">
-            <span>Odavaim <b id="price-min">—</b></span>
-            <span>Kalleim <b id="price-max">—</b></span>
-          </div>
-          <div class="price-status" id="price-status">käibemaksuga · Nord Pool / Elering</div>
-        </div>
-
         <div class="footer">
           <div class="footer-updated" id="last-updated">Viimati uuendatud: —</div>
           Ilmaradar · <span>Open-Meteo</span> · <span>NOAA</span> · <span>Ilmateenistus</span> · <span>RainViewer</span>
@@ -2419,7 +2352,7 @@ function reverseGeocode(lat, lng){
         } catch(e){}
         updateLocationLabel();
       }
-      // Country drives which national warnings + electricity zone we show
+      // Country drives which national warnings we show
       // (EE\u2194FI auto-switch as the phone crosses the border).
       if(d.countryCode) setCountry(d.countryCode);
     } catch(e){}
@@ -2470,16 +2403,10 @@ function initGeolocation(){
   );
 }
 
-/* ─── Country → national data (warnings + electricity zone) ────────
- * The forecast is global, but MeteoAlarm warnings and the Nord Pool spot
- * price are per-country. When reverse-geocoding says the phone changed
- * country, re-render both from the multi-country feed — so a trip to
- * Finland shows Finnish warnings + the FI price, and it flips back home. */
-var COUNTRY_NAME_ET = { EE:'Eesti', FI:'Soome', LV:'Läti', LT:'Leedu' };
-function zoneForCountry(cc){
-  cc = (cc || 'EE').toUpperCase();
-  return ({ FI:'fi', LV:'lv', LT:'lt', EE:'ee' })[cc] || 'ee';
-}
+/* ─── Country → national warnings ──────────────────────────────────
+ * The forecast is global, but MeteoAlarm warnings are per-country. When
+ * reverse-geocoding says the phone changed country, refetch warnings so a
+ * trip to Finland shows Finnish warnings, and it flips back home. */
 function setCountry(cc){
   cc = (cc || '').toUpperCase();
   if(!cc || cc === CONFIG.country) return;
@@ -2489,10 +2416,7 @@ function setCountry(cc){
     g.country = cc;
     localStorage.setItem('wx.geo', JSON.stringify(g));
   } catch(e){}
-  // The price feed carries every zone, so a cache re-render is enough;
-  // warnings aren't cached in localStorage, so refetch them.
-  var np = (typeof loadCache === 'function') ? loadCache('wx.nps') : null;
-  if(np && typeof renderNps === 'function') renderNps(np.data);
+  // Warnings aren't cached in localStorage, so refetch for the new country.
   if(typeof fetchWarnings === 'function') fetchWarnings();
 }
 
@@ -3696,133 +3620,6 @@ setInterval(fetchWarnings, 5 * 60 * 1000);
 // EMHI station fetch removed in wa3 (no alt locations). The data
 // branch's emhi.json is still read for CAP warnings (fetchWarnings).
 
-/* ─── Electricity price feed (Elering bridge on the data branch) ───
- * Same local-then-remote pattern as EMHI: data/nps.json for local dev,
- * else the raw.githubusercontent.com copy the GH Actions cron writes. */
-var NPS_LOCAL_URL  = 'data/nps.json';
-var NPS_REMOTE_URL = 'https://raw.githubusercontent.com/indrekraag/wa3/data/nps.json';
-function fetchNpsFrom(url, onFail){
-  var xhr = new XMLHttpRequest();
-  xhr.open('GET', url, true);
-  xhr.timeout = 10000;
-  xhr.onload = function(){
-    if(xhr.status !== 200){ if(onFail) onFail(); return; }
-    try{
-      var data = JSON.parse(xhr.responseText);
-      saveCache('wx.nps', data);
-      renderNps(data);
-    }catch(e){ if(onFail) onFail(); }
-  };
-  xhr.onerror   = function(){ if(onFail) onFail(); };
-  xhr.ontimeout = function(){ if(onFail) onFail(); };
-  xhr.send();
-}
-function fetchNps(){
-  fetchNpsFrom(NPS_LOCAL_URL, function(){ fetchNpsFrom(NPS_REMOTE_URL); });
-}
-function renderNps(data){
-  try{
-    var barsEl = byId('price-spark'), gridEl = byId('price-grid'), axisEl = byId('price-axis');
-    if(!barsEl) return;
-    // Pick the price zone for the phone's current country (EE↔FI↔…).
-    // The feed carries every zone under data.zones; fall back to the
-    // top-level EE prices for older snapshots.
-    var zoneKey = zoneForCountry(CONFIG.country);
-    var zone = data && data.zones && data.zones[zoneKey];
-    var prices = (zone && zone.prices) || (data && data.prices) || [];
-    if(!prices.length) return;
-    var vat = (zone && typeof zone.vat_pct === 'number') ? zone.vat_pct
-            : (data && typeof data.vat_pct === 'number') ? data.vat_pct : NPS_VAT_PCT;
-    NPS_VAT_PCT = vat;
-    var byTs = {};
-    prices.forEach(function(p){ byTs[p.ts] = p.eur_mwh; });
-
-    // Rolling window: 3 h of context behind, then everything available
-    // ahead (today, plus tomorrow once Nord Pool publishes it ~15:00).
-    // Missing FUTURE hours stop the chart (no fabricated bars); missing
-    // past hours are just skipped.
-    var now = new Date();
-    var nowHourMs = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours(), 0, 0, 0).getTime();
-    var startMs = nowHourMs - 3 * 3600000;
-    var items = [];   // {date, snt, isNow, isPast}
-    for(var i = 0; i < 48; i++){
-      var d = new Date(startMs + i * 3600000);
-      var eur = byTs[Math.floor(d.getTime() / 1000)];
-      if(eur === undefined){
-        if(d.getTime() < nowHourMs) continue;   // missing past hour — skip
-        break;                                  // first missing future hour — stop
-      }
-      items.push({
-        date: d, snt: priceSnt(eur),
-        isNow:  d.getTime() === nowHourMs,
-        isPast: d.getTime() <  nowHourMs
-      });
-    }
-    if(items.length < 2) return;
-    var vals = items.map(function(x){ return x.snt; });
-    var maxV = Math.max.apply(null, vals);
-
-    // Nice Y scale + step for the gridlines/labels.
-    var step = maxV <= 10 ? 2 : maxV <= 20 ? 5 : maxV <= 60 ? 10 : 20;
-    var top = Math.max(step * 2, Math.ceil(maxV / step) * step);
-
-    // Gridlines + left-axis labels (s/kWh)
-    if(gridEl){
-      gridEl.innerHTML = '';
-      for(var y = 0; y <= top; y += step){
-        var line = document.createElement('div');
-        line.className = 'price-gridline' + (y === 0 ? ' zero' : '');
-        line.style.bottom = (y / top * 100) + '%';
-        var lab = document.createElement('span'); lab.textContent = y;
-        line.appendChild(lab);
-        gridEl.appendChild(line);
-      }
-    }
-
-    // Bars (color-tiered; past dimmed, current hour outlined) + one hour
-    // label under each bar. Thin labels to every 2nd when the window is
-    // long (tomorrow published) so they don't collide.
-    var labelEvery = items.length > 22 ? 2 : 1;
-    barsEl.innerHTML = '';
-    if(axisEl) axisEl.innerHTML = '';
-    items.forEach(function(x, idx){
-      var bar = document.createElement('span');
-      bar.style.height = Math.max(2, (x.snt / top) * 100) + '%';
-      var top2 = priceBarColor(x.snt);
-      var base = top2.replace(/[\d.]+\)$/, function(m){ return (parseFloat(m) * 0.30).toFixed(2) + ')'; });
-      bar.style.background = 'linear-gradient(180deg, ' + top2 + ' 0%, ' + base + ' 100%)';
-      bar.setAttribute('title', pad(x.date.getHours()) + ':00 · ' + x.snt.toFixed(1) + ' s/kWh');
-      bar.className = x.isNow ? 'now' : (x.isPast ? 'past' : '');
-      barsEl.appendChild(bar);
-      if(axisEl){
-        var s = document.createElement('span');
-        s.textContent = (x.isNow || idx % labelEvery === 0) ? pad(x.date.getHours()) : '';
-        if(x.isNow) s.className = 'now';
-        axisEl.appendChild(s);
-      }
-    });
-
-    // Current price (big) + cheapest/priciest among UPCOMING hours
-    var nowItem = items.filter(function(x){ return x.isNow; })[0];
-    var nowEl = byId('price-now');
-    if(nowEl && nowItem){
-      nowEl.textContent = nowItem.snt.toFixed(1);
-      nowEl.style.color = priceBarColor(nowItem.snt).replace(/[\d.]+\)$/, '1)');
-    }
-    var future = items.filter(function(x){ return !x.isPast; });
-    if(future.length){
-      var minH = future.reduce(function(a, b){ return b.snt < a.snt ? b : a; });
-      var maxH = future.reduce(function(a, b){ return b.snt > a.snt ? b : a; });
-      if(byId('price-min')) byId('price-min').textContent = pad(minH.date.getHours()) + ':00 · ' + minH.snt.toFixed(1);
-      if(byId('price-max')) byId('price-max').textContent = pad(maxH.date.getHours()) + ':00 · ' + maxH.snt.toFixed(1);
-    }
-    // Name the market by the zone actually shown (zoneKey), not the raw
-    // country — so an uncovered country (e.g. SE → EE fallback) honestly
-    // reads "Eesti" instead of labelling EE data as that country's market.
-    var mkt = COUNTRY_NAME_ET[zoneKey.toUpperCase()] || 'Eesti';
-    if(byId('price-status')) byId('price-status').textContent = 's/kWh · käibemaksuga (' + NPS_VAT_PCT + '%) · ' + mkt + ' · Nord Pool';
-  }catch(e){ console.warn('renderNps error', e); }
-}
 // Kurevere road-weather fetch removed in wa3 (no alt locations).
 
 /* ═══════════════════════════════════════════════════════════════
@@ -4198,33 +3995,6 @@ function niceMax(max, unit){
   return Math.ceil(max);
 }
 
-/* ─── Electricity price (Nord Pool / Elering) ─────────────────────
- * Color stops in snt/kWh INCLUDING VAT, calibrated for Estonian spot
- * prices: near-free green → expensive red. */
-var NPS_VAT_PCT = 24;   // replaced by the feed's vat_pct when present
-var PRICE_STOPS = [
-  { v:  0, c: [ 70, 200, 120, 0.90] }, /* free / near-zero — green   */
-  { v:  5, c: [140, 205,  80, 0.90] }, /* cheap — yellow-green       */
-  { v: 10, c: [240, 160,  45, 0.95] }, /* moderate — orange (from 10)*/
-  { v: 18, c: [228,  70,  50, 1.00] }, /* pricey — red (from 18)     */
-  { v: 35, c: [200,  40,  60, 1.00] }, /* expensive — deep red       */
-  { v: 50, c: [150,  60, 205, 1.00] }, /* very expensive — purple    */
-  { v: 90, c: [120,  45, 175, 1.00] }, /* extreme — deep purple      */
-];
-function priceBarColor(snt){
-  var s = PRICE_STOPS;
-  if(snt <= s[0].v) return rgbaStr(s[0].c);
-  if(snt >= s[s.length-1].v) return rgbaStr(s[s.length-1].c);
-  for(var i = 1; i < s.length; i++){
-    if(snt <= s[i].v){
-      var t = (snt - s[i-1].v) / (s[i].v - s[i-1].v);
-      return rgbaStr(lerpColor(s[i-1].c, s[i].c, t));
-    }
-  }
-  return rgbaStr(s[s.length-1].c);
-}
-/* €/MWh (ex-VAT, as the feed stores it) → snt/kWh incl VAT */
-function priceSnt(eur_mwh){ return eur_mwh / 10 * (1 + NPS_VAT_PCT / 100); }
 
 function renderSpark(elId, data, opts){
   var el = byId(elId);
@@ -4486,8 +4256,6 @@ function hydrateFromCache(){
   if(ov) renderOvation(ov.data);
   var sw = loadCache('wx.solarwind');
   if(sw) renderSolarWind(sw.data);
-  var np = loadCache('wx.nps');
-  if(np) renderNps(np.data);
 }
 hydrateFromCache();
 
@@ -4521,10 +4289,6 @@ fetchOvation();
 setInterval(fetchOvation, 5*60*1000);
 fetchSolarWind();
 setInterval(fetchSolarWind, 5*60*1000);
-fetchNps();
-// Day-ahead prices only change once a day; the 15-min refetch is mainly
-// to roll the highlighted "now" bar onto the current hour.
-setInterval(fetchNps, 15 * 60 * 1000);
 
 // Live location: ask the browser for the phone's position on load. On
 // success applyLocation() re-runs the position-dependent fetches; on
