@@ -221,9 +221,13 @@ renders directly under Hetkeilm, no price card, warnings still translate
 and switch EE↔FI; `node --check` + orphan-ID checks clean; `fetch_emhi.py`
 runs live producing country-tagged `emhi.json`; `emhi.yml` YAML valid.
 
-**Next step:** create the GitHub repo `indrekraag/wa3`, push `main`, enable
-GitHub Pages, let the Actions workflow populate the `data` branch, then
-smoke-test on the actual iPhone in Finland (grant location on first load).
+**Deployed 2026-07-05:** repo `indrekraag/wa3` created, `main` pushed. The
+Actions workflow already ran on that push and populated the `data` branch
+with a valid country-tagged `emhi.json` (11 EE + 4 FI warnings), so Actions
+is enabled with write access. **Only remaining step:** enable GitHub Pages
+(Settings → Pages → Deploy from branch: `main` / root) → the site goes live
+at https://indrekraag.github.io/wa3/. Then on the iPhone in Finland: open
+the URL, Share → Add to Home Screen, allow location on first open.
 
 **Open follow-ups:**
 - App name "Ilmaradar" and the icon wordmark ("MADISE") are placeholders —
