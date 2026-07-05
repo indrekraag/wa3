@@ -15,11 +15,12 @@ Why this script exists:
   force-pushed to a 'data' orphan branch in the repo, which the PWA reads
   via raw.githubusercontent.com (which DOES allow CORS).
 
-Warnings are sourced from the MeteoAlarm Estonia ATOM feed (CAP 1.2).
-Each warning's expiry timestamp is checked at fetch time, so expired
-warnings never reach the JSON — even if MeteoAlarm leaves them in the
-feed as historical entries. The English-language CAP <info> block is
-preferred so the `event` field matches the app's translation table.
+Warnings are sourced from the MeteoAlarm Estonia + Finland ATOM feeds
+(CAP 1.2) and tagged per warning with country (EE/FI), so wa3 can show
+the set matching the phone's current location. Each warning's expiry
+timestamp is checked at fetch time, so expired warnings never reach the
+JSON. The English-language CAP <info> block is preferred so the `event`
+field matches the app's translation table.
 
 Usage:
     python3 scripts/fetch_emhi.py                       # default station(s)
@@ -47,7 +48,13 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 
 EMHI_URL = "https://www.ilmateenistus.ee/ilma_andmed/xml/observations.php"
-METEOALARM_URL = "https://feeds.meteoalarm.org/feeds/meteoalarm-legacy-atom-estonia"
+# MeteoAlarm per-country CAP feeds. wa3 follows the phone across the
+# EE↔FI border, so we fetch both and tag each warning with its country;
+# the PWA shows only the set matching the phone's current country.
+METEOALARM_FEEDS = [
+    ("EE", "https://feeds.meteoalarm.org/feeds/meteoalarm-legacy-atom-estonia"),
+    ("FI", "https://feeds.meteoalarm.org/feeds/meteoalarm-legacy-atom-finland"),
+]
 
 # wa3 follows the phone, so warnings are NOT filtered by county — every
 # currently-active Estonian CAP warning is surfaced. (wa2 restricted this
@@ -205,53 +212,34 @@ def pick_preferred_info(infos: list[dict]) -> dict:
     return infos[0] if infos else {}
 
 
-def fetch_warnings() -> list:
-    """Pull MeteoAlarm Estonia ATOM and return every currently-active CAP
-    warning for Estonia (no county filter — wa3 follows the phone).
+def _fetch_meteoalarm_xml(url: str) -> bytes:
+    # MeteoAlarm rejects a strict Accept header with 406; use */*
+    req = urllib.request.Request(
+        url,
+        headers={
+            "User-Agent": (
+                "Mozilla/5.0 (compatible; MadiseIlmaradar/1.0; "
+                "+https://github.com/indrekraag/wa3)"
+            ),
+            "Accept": "*/*",
+        },
+    )
+    with urllib.request.urlopen(req, timeout=20) as resp:
+        return resp.read()
 
-    Filters applied at fetch time:
-      • expires must be in the future
-      • onset must be within WARNING_LOOKAHEAD_HOURS from now (so
-        multi-day-ahead alerts don't clutter the dashboard)
-      • duplicate identifiers are collapsed (same alert appears once
-        per language block in the feed)
 
-    Returns [] on any error — warnings are decorative, not critical, so
-    a failure here doesn't fail the whole workflow."""
-    try:
-        # MeteoAlarm rejects a strict Accept header with 406; use */*
-        req = urllib.request.Request(
-            METEOALARM_URL,
-            headers={
-                "User-Agent": (
-                    "Mozilla/5.0 (compatible; MadiseIlmaradar/1.0; "
-                    "+https://github.com/indrekraag/wa3)"
-                ),
-                "Accept": "*/*",
-            },
-        )
-        with urllib.request.urlopen(req, timeout=20) as resp:
-            xml_bytes = resp.read()
-    except Exception as exc:
-        print(f"MeteoAlarm fetch failed: {exc}", file=sys.stderr)
-        return []
-
+def _parse_meteoalarm(xml_bytes: bytes, country: str, now, future_cutoff,
+                      seen: set) -> list:
+    """Parse one country's MeteoAlarm ATOM feed into active-warning dicts,
+    each tagged with `country`. `seen` dedups identifiers across feeds.
+    Raises ET.ParseError on malformed XML (caller skips that feed)."""
     ns = {
         "a": "http://www.w3.org/2005/Atom",
         "cap": "urn:oasis:names:tc:emergency:cap:1.2",
     }
-    try:
-        root = ET.fromstring(xml_bytes)
-    except ET.ParseError as exc:
-        print(f"MeteoAlarm parse failed: {exc}", file=sys.stderr)
-        return []
+    root = ET.fromstring(xml_bytes)
 
-    now = dt.datetime.now(dt.timezone.utc)
-    future_cutoff = now + dt.timedelta(hours=WARNING_LOOKAHEAD_HOURS)
-
-    warnings: list[dict] = []
-    seen: set[str] = set()
-
+    out: list[dict] = []
     for entry in root.findall("a:entry", ns):
         infos = extract_info_blocks(entry)
 
@@ -270,7 +258,7 @@ def fetch_warnings() -> list:
 
         chosen = pick_preferred_info(infos)
 
-        # No area filter in wa3 — every Estonian county's warning is kept.
+        # No area filter — every county/region in the feed is kept.
 
         # Expiry filter — drop if expired
         expires = parse_iso(chosen.get("expires"))
@@ -296,11 +284,11 @@ def fetch_warnings() -> list:
         if ident:
             seen.add(ident)
 
-        # chosen already prefers the Estonian-language info block, so its
-        # areaDesc is the county name in Estonian when available.
+        # chosen prefers the English info block (so `event` matches the
+        # app's translation table); its areaDesc is the region name.
         area = chosen.get("areaDesc") or ""
 
-        warnings.append({
+        out.append({
             "event":     chosen.get("event"),
             "severity":  chosen.get("severity"),
             "areaDesc":  area,
@@ -308,8 +296,42 @@ def fetch_warnings() -> list:
             "expires":   chosen.get("expires"),
             "urgency":   chosen.get("urgency"),
             "certainty": chosen.get("certainty"),
+            "country":   country,
         })
+    return out
 
+
+def fetch_warnings() -> list:
+    """Pull every configured MeteoAlarm country feed (EE + FI) and return
+    all currently-active CAP warnings, each tagged with its country.
+
+    Filters applied at fetch time:
+      • expires must be in the future
+      • onset must be within WARNING_LOOKAHEAD_HOURS from now (so
+        multi-day-ahead alerts don't clutter the dashboard)
+      • duplicate identifiers are collapsed across feeds
+
+    Returns [] on total failure — warnings are decorative, not critical,
+    so a failure here never fails the workflow. A single feed erroring is
+    logged and skipped; the other feeds still contribute."""
+    now = dt.datetime.now(dt.timezone.utc)
+    future_cutoff = now + dt.timedelta(hours=WARNING_LOOKAHEAD_HOURS)
+
+    warnings: list[dict] = []
+    seen: set[str] = set()
+    for country, url in METEOALARM_FEEDS:
+        try:
+            xml_bytes = _fetch_meteoalarm_xml(url)
+        except Exception as exc:  # noqa: BLE001 — soft-fail per feed
+            print(f"MeteoAlarm {country} fetch failed: {exc}", file=sys.stderr)
+            continue
+        try:
+            warnings.extend(
+                _parse_meteoalarm(xml_bytes, country, now, future_cutoff, seen)
+            )
+        except ET.ParseError as exc:
+            print(f"MeteoAlarm {country} parse failed: {exc}", file=sys.stderr)
+            continue
     return warnings
 
 
@@ -338,7 +360,7 @@ def build_snapshot(xml_bytes: bytes, wmo_codes: list[str], warnings=None) -> dic
         "stations": stations,
         "warnings": fetch_warnings() if warnings is None else warnings,
         "warnings_source": "MeteoAlarm / Estonian Environment Agency CAP feed",
-        "warnings_scope": "all-Estonia (no county filter)",
+        "warnings_scope": "all-Estonia + all-Finland (MeteoAlarm EE+FI, tagged per warning)",
     }
     if missing:
         snapshot["missing_wmo_codes"] = missing

@@ -2362,7 +2362,7 @@ body {
  *   • Astronomical (sun, moon) — local computation
  * ═════════════════════════════════════════════════════════════════════ */
 
-var CONFIG = { lat:58.81627, lng:23.74447, label:'', weatherRefreshMs:5*60*1000 };  // lat/lng seeded from GPS at runtime; these are only the offline fallback
+var CONFIG = { lat:58.81627, lng:23.74447, label:'', country:'EE', weatherRefreshMs:5*60*1000 };  // lat/lng + country seeded from GPS at runtime; these are only the offline fallback (Estonia)
 var PRESSURE_HISTORY = [];
 var TODAY_SUNRISE_MS = null, TODAY_SUNSET_MS = null;
 var LAST_FETCH_MS = null;
@@ -2386,6 +2386,7 @@ function formatTime(d){ return pad(d.getHours()) + ':' + pad(d.getMinutes()); }
     if(g && isFinite(g.lat) && isFinite(g.lng)){
       CONFIG.lat = g.lat; CONFIG.lng = g.lng;
       if(g.label) CONFIG.label = g.label;
+      if(g.country) CONFIG.country = g.country;
     }
   } catch(e){}
 })();
@@ -2418,6 +2419,9 @@ function reverseGeocode(lat, lng){
         } catch(e){}
         updateLocationLabel();
       }
+      // Country drives which national warnings + electricity zone we show
+      // (EE\u2194FI auto-switch as the phone crosses the border).
+      if(d.countryCode) setCountry(d.countryCode);
     } catch(e){}
   };
   xhr.send();
@@ -2425,7 +2429,15 @@ function reverseGeocode(lat, lng){
 
 function applyLocation(lat, lng){
   CONFIG.lat = lat; CONFIG.lng = lng;
-  try { localStorage.setItem('wx.geo', JSON.stringify({lat:lat, lng:lng, label:CONFIG.label})); } catch(e){}
+  try {
+    // Merge (don't overwrite) so the persisted country survives GPS
+    // re-fixes — setCountry only re-writes it when the country changes,
+    // so a plain overwrite here would wipe it and cold-start would fall
+    // back to the 'EE' default even while abroad.
+    var g = JSON.parse(localStorage.getItem('wx.geo') || '{}');
+    g.lat = lat; g.lng = lng; g.label = CONFIG.label; g.country = CONFIG.country;
+    localStorage.setItem('wx.geo', JSON.stringify(g));
+  } catch(e){}
   reverseGeocode(lat, lng);
   // Re-run everything that depends on position (Kp + solar wind are
   // global, so they're left on their own timers).
@@ -2456,6 +2468,32 @@ function initGeolocation(){
     function(){ _geoBusy = false; /* denied / unavailable — keep last-known */ },
     { enableHighAccuracy:false, timeout:10000, maximumAge:5*60*1000 }
   );
+}
+
+/* ─── Country → national data (warnings + electricity zone) ────────
+ * The forecast is global, but MeteoAlarm warnings and the Nord Pool spot
+ * price are per-country. When reverse-geocoding says the phone changed
+ * country, re-render both from the multi-country feed — so a trip to
+ * Finland shows Finnish warnings + the FI price, and it flips back home. */
+var COUNTRY_NAME_ET = { EE:'Eesti', FI:'Soome', LV:'Läti', LT:'Leedu' };
+function zoneForCountry(cc){
+  cc = (cc || 'EE').toUpperCase();
+  return ({ FI:'fi', LV:'lv', LT:'lt', EE:'ee' })[cc] || 'ee';
+}
+function setCountry(cc){
+  cc = (cc || '').toUpperCase();
+  if(!cc || cc === CONFIG.country) return;
+  CONFIG.country = cc;
+  try {
+    var g = JSON.parse(localStorage.getItem('wx.geo') || '{}');
+    g.country = cc;
+    localStorage.setItem('wx.geo', JSON.stringify(g));
+  } catch(e){}
+  // The price feed carries every zone, so a cache re-render is enough;
+  // warnings aren't cached in localStorage, so refetch them.
+  var np = (typeof loadCache === 'function') ? loadCache('wx.nps') : null;
+  if(np && typeof renderNps === 'function') renderNps(np.data);
+  if(typeof fetchWarnings === 'function') fetchWarnings();
 }
 
 /* ─── Clock + Estonian weekday/date in hero-bar ──────────────────── */
@@ -3541,10 +3579,49 @@ var WARN_EVENT_ET = {
   'Drought Level 2':               'Tugev põud',
   'Drought Level 3':               'Väga tugev põud'
 };
+
+/* Map a CAP event string to an Estonian label. Estonia's MeteoAlarm feed
+ * uses the standardised "X Level N" taxonomy (exact keys above); Finland's
+ * feed uses free-form English ("Strong wind advisory", "Warning for
+ * gale-force winds", "Heavy rain warning", …). So: exact lookup first,
+ * then a keyword fallback, then the raw text. */
+function translateWarning(ev){
+  if(!ev) return 'Hoiatus';
+  if(WARN_EVENT_ET[ev]) return WARN_EVENT_ET[ev];
+  var e = ev.toLowerCase();
+  if(e.indexOf('thunder') >= 0)                          return 'Äike';   // before 'storm' — "thunderstorm" contains "storm"
+  if(e.indexOf('gale') >= 0 || e.indexOf('storm') >= 0 || e.indexOf('hurricane') >= 0) return 'Tormituul';
+  if(e.indexOf('wind') >= 0)                             return 'Tugev tuul';
+  if(e.indexOf('rain') >= 0 || e.indexOf('precip') >= 0) return 'Tugev vihm';
+  if(e.indexOf('snow') >= 0 || e.indexOf('ice') >= 0 || e.indexOf('sleet') >= 0) return 'Lumi või jäide';
+  if(e.indexOf('flood') >= 0)                            return 'Üleujutus';
+  if(e.indexOf('heat') >= 0 || e.indexOf('hot') >= 0)    return 'Kuumus';
+  if(e.indexOf('cold') >= 0 || e.indexOf('frost') >= 0)  return 'Pakane';
+  if(e.indexOf('fog') >= 0)                              return 'Udu';
+  if(e.indexOf('fire') >= 0)                             return 'Tuleoht';
+  if(e.indexOf('wave') >= 0 || e.indexOf('sea') >= 0 || e.indexOf('coastal') >= 0 || e.indexOf('marine') >= 0) return 'Merehoiatus';
+  if(e.indexOf('traffic') >= 0)                          return 'Ohtlik teeolu';
+  if(e.indexOf('uv') >= 0)                               return 'UV-hoiatus';
+  return ev;
+}
 function renderWarnings(data){
   var el = byId('warning-bar');
   if(!el) return;
   var arr = (data && data.warnings) || [];
+  // Only show warnings for the country the phone is currently in;
+  // untagged warnings (older feed) are treated as matching.
+  arr = arr.filter(function(w){ return !w.country || w.country === CONFIG.country; });
+  // Countries the bridge actually fetches CAP feeds for. Anywhere else
+  // (LV/LT/SE/…) we can't claim "no warnings" — show a neutral "no data"
+  // state instead of a reassuring green all-clear. Keep in sync with
+  // scripts/fetch_emhi.py METEOALARM_FEEDS.
+  var WARN_COUNTRIES = { EE:1, FI:1 };
+  if(!WARN_COUNTRIES[(CONFIG.country || '').toUpperCase()]){
+    el.className = 'alert';
+    el.style.color = ''; el.style.background = ''; el.style.border = '';
+    el.innerHTML = '<span class="alert-icon">–</span><span>Hoiatuste andmed puuduvad</span>';
+    return;
+  }
   if(arr.length === 0){
     el.className = 'alert';
     el.style.color = '';
@@ -3556,7 +3633,7 @@ function renderWarnings(data){
   var w = arr[0];
   var sev = (w.severity || 'moderate').toLowerCase();
   el.className = 'alert ' + sev;
-  var label = WARN_EVENT_ET[w.event] || w.event || 'Hoiatus';
+  var label = translateWarning(w.event);
   // Severity color via inline style (restrained palette: warn-amber for
   // moderate, soft coral for severe/extreme).
   if(sev === 'severe' || sev === 'extreme'){
@@ -3575,61 +3652,18 @@ function renderWarnings(data){
  * WARNINGS — fetch live from EMHI XML, filter Lääne maakond + expiry
  * Falls back to GitHub data branch if CORS blocks direct fetch.
  * ═══════════════════════════════════════════════════════════════ */
-var EMHI_WARNINGS_URL = 'https://www.ilmateenistus.ee/ilma_andmed/xml/hoiatus.php';
+/* wa3 reads warnings from the data-branch emhi.json only. The direct
+ * ilmateenistus XML fetch that wa2 tried first is CORS-blocked in the
+ * browser (it never succeeded there), so it is dropped here. The bridge
+ * tags each warning with its country (EE/FI); renderWarnings filters to
+ * the phone's current country. */
+var EMHI_LOCAL_URL  = 'data/emhi.json';
+var EMHI_REMOTE_URL = 'https://raw.githubusercontent.com/indrekraag/wa3/data/emhi.json';
 
-function parseEmhiWarningsXML(xmlText){
-  // Parse CAP XML, return array of active warnings for Lääne maakond
-  var warnings = [];
-  var now = new Date();
-  try {
-    var parser = new DOMParser();
-    var doc = parser.parseFromString(xmlText, 'application/xml');
-    var alerts = doc.querySelectorAll('alert');
-    alerts.forEach(function(alert){
-      var expires = alert.querySelector('expires');
-      var onset   = alert.querySelector('onset');
-      var event   = alert.querySelector('event');
-      var severity= alert.querySelector('severity');
-      var areaDesc= alert.querySelector('areaDesc');
-      if(!expires || !event) return;
-      var expiresDate = new Date(expires.textContent.trim());
-      var onsetDate   = onset ? new Date(onset.textContent.trim()) : now;
-      // Filter: must not be expired, must not be in the future beyond now
-      if(expiresDate <= now) return;
-      if(onsetDate > now) return; // not yet active — skip (or show as upcoming?)
-      // wa3 follows the phone, so no county filter — surface every
-      // currently-active Estonian warning.
-      var area = areaDesc ? areaDesc.textContent : '';
-      warnings.push({
-        event:    event.textContent.trim(),
-        severity: severity ? severity.textContent.trim() : 'Moderate',
-        areaDesc: area,
-        expires:  expires.textContent.trim()
-      });
-    });
-  } catch(e){ console.warn('EMHI XML parse error', e); }
-  return warnings;
-}
-
-function fetchWarningsDirect(onFail){
-  var xhr = new XMLHttpRequest();
-  xhr.open('GET', EMHI_WARNINGS_URL, true);
-  xhr.timeout = 8000;
-  xhr.onload = function(){
-    if(xhr.status !== 200){ onFail(); return; }
-    var warnings = parseEmhiWarningsXML(xhr.responseText);
-    renderWarnings({ warnings: warnings });
-  };
-  xhr.onerror   = function(){ onFail(); };
-  xhr.ontimeout = function(){ onFail(); };
-  xhr.send();
-}
-
-function fetchWarningsFallback(){
-  // Data branch fallback — but filter out expired warnings client-side
+function fetchWarnings(){
   var urls = [EMHI_LOCAL_URL, EMHI_REMOTE_URL];
   var idx = 0;
-  function tryNext(){
+  (function tryNext(){
     if(idx >= urls.length) return;
     var url = urls[idx++];
     var xhr = new XMLHttpRequest();
@@ -3639,7 +3673,7 @@ function fetchWarningsFallback(){
       if(xhr.status !== 200){ tryNext(); return; }
       try{
         var data = JSON.parse(xhr.responseText);
-        // Filter out expired warnings before rendering
+        // Drop expired warnings client-side (the feed can lag).
         var now = new Date();
         if(data.warnings){
           data.warnings = data.warnings.filter(function(w){
@@ -3653,16 +3687,11 @@ function fetchWarningsFallback(){
     xhr.onerror   = function(){ tryNext(); };
     xhr.ontimeout = function(){ tryNext(); };
     xhr.send();
-  }
-  tryNext();
+  })();
 }
-
-function fetchWarnings(){
-  fetchWarningsDirect(fetchWarningsFallback);
-}
+fetchWarnings();   // initial load — otherwise warnings only appear once the
+                   // country changes or the 5-min interval first fires.
 setInterval(fetchWarnings, 5 * 60 * 1000);
-var EMHI_LOCAL_URL = 'data/emhi.json';
-var EMHI_REMOTE_URL = 'https://raw.githubusercontent.com/indrekraag/wa3/data/emhi.json';
 
 // EMHI station fetch removed in wa3 (no alt locations). The data
 // branch's emhi.json is still read for CAP warnings (fetchWarnings).
@@ -3695,9 +3724,16 @@ function renderNps(data){
   try{
     var barsEl = byId('price-spark'), gridEl = byId('price-grid'), axisEl = byId('price-axis');
     if(!barsEl) return;
-    var prices = (data && data.prices) || [];
+    // Pick the price zone for the phone's current country (EE↔FI↔…).
+    // The feed carries every zone under data.zones; fall back to the
+    // top-level EE prices for older snapshots.
+    var zoneKey = zoneForCountry(CONFIG.country);
+    var zone = data && data.zones && data.zones[zoneKey];
+    var prices = (zone && zone.prices) || (data && data.prices) || [];
     if(!prices.length) return;
-    if(typeof data.vat_pct === 'number') NPS_VAT_PCT = data.vat_pct;
+    var vat = (zone && typeof zone.vat_pct === 'number') ? zone.vat_pct
+            : (data && typeof data.vat_pct === 'number') ? data.vat_pct : NPS_VAT_PCT;
+    NPS_VAT_PCT = vat;
     var byTs = {};
     prices.forEach(function(p){ byTs[p.ts] = p.eur_mwh; });
 
@@ -3780,7 +3816,11 @@ function renderNps(data){
       if(byId('price-min')) byId('price-min').textContent = pad(minH.date.getHours()) + ':00 · ' + minH.snt.toFixed(1);
       if(byId('price-max')) byId('price-max').textContent = pad(maxH.date.getHours()) + ':00 · ' + maxH.snt.toFixed(1);
     }
-    if(byId('price-status')) byId('price-status').textContent = 's/kWh · käibemaksuga (' + NPS_VAT_PCT + '%) · Nord Pool / Elering';
+    // Name the market by the zone actually shown (zoneKey), not the raw
+    // country — so an uncovered country (e.g. SE → EE fallback) honestly
+    // reads "Eesti" instead of labelling EE data as that country's market.
+    var mkt = COUNTRY_NAME_ET[zoneKey.toUpperCase()] || 'Eesti';
+    if(byId('price-status')) byId('price-status').textContent = 's/kWh · käibemaksuga (' + NPS_VAT_PCT + '%) · ' + mkt + ' · Nord Pool';
   }catch(e){ console.warn('renderNps error', e); }
 }
 // Kurevere road-weather fetch removed in wa3 (no alt locations).

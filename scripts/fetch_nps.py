@@ -12,14 +12,19 @@ Why this script exists:
   via raw.githubusercontent.com (CORS-open).
 
 Output shape (prices are HOURLY, UTC hour-start unix seconds, €/MWh
-EXCLUDING VAT — the app converts to snt/kWh and adds VAT client-side so
-the VAT rate stays adjustable without re-fetching):
+EXCLUDING VAT — the app converts to snt/kWh and adds VAT client-side).
+Elering serves the EE/FI/LV/LT Nord Pool zones from one call; we emit
+them all under `zones` and mirror EE at the top level for compatibility:
 
     {
-      "source": "Elering / Nord Pool day-ahead (EE)",
+      "source": "Elering / Nord Pool day-ahead (EE, FI, LV, LT)",
       "fetched_at": "2026-06-22T10:00:00+00:00",
       "vat_pct": 24,
-      "prices": [ {"ts": 1750000000, "eur_mwh": 3.41}, ... ]
+      "prices": [ {"ts": 1750000000, "eur_mwh": 3.41}, ... ],   # = EE zone
+      "zones": {
+        "ee": {"vat_pct": 24,   "prices": [...]},
+        "fi": {"vat_pct": 25.5, "prices": [...]}, ...
+      }
     }
 
 Nord Pool moved to 15-minute market time units in 2025, so the API now
@@ -48,9 +53,12 @@ from pathlib import Path
 
 API = "https://dashboard.elering.ee/api/nps/price"
 
-# Suggested default VAT for the Estonian spot component (24% since
-# 2025-07-01). Carried in the JSON so the app can display it / toggle it.
-VAT_PCT = 24
+# Per-country VAT (standard rate) applied to the spot component, carried
+# in the JSON so the app can display it without re-fetching. Elering
+# serves the EE, FI, LV and LT Nord Pool zones from a single call.
+# (EE 24% since 2025-07-01; FI 25.5% since 2024-09-01; LV/LT 21%.)
+ZONE_VAT = {"ee": 24, "fi": 25.5, "lv": 21, "lt": 21}
+ZONE_ORDER = ["ee", "fi", "lv", "lt"]
 
 # How wide a window to fetch: enough to always cover the next 24 h from
 # "now" plus tomorrow when it's published (~15:00 EET day-ahead).
@@ -82,36 +90,48 @@ def fetch_raw() -> dict:
         return json.loads(resp.read().decode("utf-8"))
 
 
-def build_snapshot(raw: dict) -> dict:
-    ee = ((raw or {}).get("data") or {}).get("ee") or []
-    if not ee:
-        raise RuntimeError("Elering returned no EE price points")
-
-    # Average the (now 15-min) points into hourly buckets keyed by the
-    # UTC hour-start unix second.
+def _hourly(points: list) -> list:
+    """Average Elering's (now 15-min) points into hourly buckets keyed by
+    the UTC hour-start unix second."""
     buckets: dict[int, list] = defaultdict(list)
-    for p in ee:
+    for p in points or []:
         ts = p.get("timestamp")
         price = p.get("price")
         if ts is None or price is None:
             continue
         hour_start = int(ts) - (int(ts) % 3600)
         buckets[hour_start].append(float(price))
-
-    if not buckets:
-        raise RuntimeError("Elering points had no usable timestamp/price")
-
-    prices = [
+    return [
         {"ts": h, "eur_mwh": round(sum(v) / len(v), 2)}
         for h, v in sorted(buckets.items())
     ]
+
+
+def build_snapshot(raw: dict) -> dict:
+    data = (raw or {}).get("data") or {}
+    if not (data.get("ee") or []):
+        raise RuntimeError("Elering returned no EE price points")
+
+    # Build every zone Elering returned (EE, FI, LV, LT). The PWA picks
+    # the zone matching the phone's current country; EE is the default.
+    zones: dict[str, dict] = {}
+    for z in ZONE_ORDER:
+        prices = _hourly(data.get(z) or [])
+        if prices:
+            zones[z] = {"vat_pct": ZONE_VAT.get(z, 24), "prices": prices}
+
+    if "ee" not in zones:
+        raise RuntimeError("Elering EE points had no usable timestamp/price")
+
     return {
-        "source": "Elering / Nord Pool day-ahead (EE)",
+        "source": "Elering / Nord Pool day-ahead (EE, FI, LV, LT)",
         "source_url": API,
         "fetched_at": dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat(),
-        "vat_pct": VAT_PCT,
-        "currency_note": "eur_mwh excludes VAT; snt/kWh = eur_mwh/10, then * (1+vat/100)",
-        "prices": prices,
+        # Top-level vat_pct/prices mirror the EE zone for backward compat.
+        "vat_pct": ZONE_VAT["ee"],
+        "prices": zones["ee"]["prices"],
+        "zones": zones,
+        "currency_note": "eur_mwh excludes VAT; snt/kWh = eur_mwh/10, then * (1+vat/100). Per-zone VAT in zones[*].vat_pct.",
     }
 
 
@@ -156,7 +176,7 @@ def main() -> int:
     out_path = Path(args.out)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(json.dumps(snap, ensure_ascii=False, indent=2), encoding="utf-8")
-    print(f"Wrote {out_path} — {len(snap['prices'])} hourly points, vat={snap['vat_pct']}%")
+    print(f"Wrote {out_path} — zones={list(snap['zones'])}, EE {len(snap['prices'])} hourly points")
     set_action_output("wrote", "true")
     return 0
 

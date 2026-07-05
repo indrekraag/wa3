@@ -66,6 +66,33 @@ Geolocation requires a **secure context** — GitHub Pages (https) and
 `http://localhost` both qualify; a plain `http://<LAN-IP>` does **not**,
 so on-phone LAN testing won't get a GPS fix (it'll show the fallback).
 
+## Country-specific cards (EE↔FI auto-switch)
+
+The forecast, radar, pollen, aurora and astronomy are global and follow
+`CONFIG.lat/lng` anywhere. Two cards are **national**, so they follow the
+phone's **country** instead:
+
+- **Warnings row** — MeteoAlarm warnings for the current country.
+- **Elektri hind** — the Nord Pool price **zone** for the current country.
+
+`reverseGeocode()` reads the `countryCode` and calls `setCountry(cc)`,
+which stores `CONFIG.country` (persisted in `wx.geo`) and, on a change,
+re-renders the price from cache + refetches warnings. `zoneForCountry()`
+maps country → Nord Pool zone; `renderNps()` picks `data.zones[zone]`
+(falls back to top-level EE for old snapshots); `renderWarnings()` filters
+`warnings[]` by `country` and translates the event via `translateWarning()`
+(exact `WARN_EVENT_ET` table for EE's "X Level N" taxonomy, then a keyword
+fallback for Finland's free-form English event strings, then raw text).
+
+**Coverage:** the bridge fetches CAP feeds only for **EE + FI**
+(`METEOALARM_FEEDS` in `fetch_emhi.py`) and the client's `WARN_COUNTRIES`
+allowlist must match — for any other country the warnings row shows a
+neutral "Hoiatuste andmed puuduvad" (no data), never a false green
+all-clear. Elering serves EE/FI/LV/LT, so LV/LT get correct prices too;
+anywhere else the price falls back to the EE zone and is honestly labelled
+"Eesti". VAT per zone: EE 24, FI 25.5, LV/LT 21 (`ZONE_VAT` in
+`fetch_nps.py`).
+
 ## What the app shows
 
 All in Estonian, top-down: warning row → **Hetkeilm** (current: big temp,
@@ -85,11 +112,14 @@ identical.
   (Ovation probability is read at `round(CONFIG.lat/lng)`).
 - **BigDataCloud** `api.bigdatacloud.net/data/reverse-geocode-client` —
   **new in wa3**: keyless, CORS-open reverse geocoding for the location
-  label. Best-effort; failure is silent.
-- **MeteoAlarm** Estonia CAP feed → **all-Estonia** warnings (wa3 drops
-  wa2's Lääne-county filter). CORS-closed → GitHub Actions bridge.
-- **Elering** Nord Pool spot price → `data/nps.json`. CORS-closed → same
-  bridge. Converted to snt/kWh incl VAT client-side.
+  label **and the `countryCode`** that drives the EE↔FI auto-switch (see
+  "Country-specific cards" below). Best-effort; failure is silent.
+- **MeteoAlarm** Estonia **+ Finland** CAP feeds → warnings, each tagged
+  with its `country`. CORS-closed → GitHub Actions bridge. (wa2 was
+  Estonia-only, Lääne county; wa3 fetches both nations, all counties.)
+- **Elering** Nord Pool spot price → `data/nps.json`, **all four zones**
+  (EE/FI/LV/LT) under `zones`, each with its own `vat_pct`. CORS-closed →
+  same bridge. Converted to snt/kWh incl VAT client-side.
 - **Local astronomy** — sun/moon rise-set + alt/az computed in-browser.
 
 **Removed vs wa2:** the tarktee Kurevere road-station fetch and the EMHI
@@ -187,19 +217,28 @@ by the Actions workflow and is never merged to main.
 
 ## Current state
 
-**Status:** Initial fork from wa2 created 2026-07-05. Live-GPS wiring done,
-three alt-station chips removed, warnings broadened to all-Estonia, raw
-data URLs repointed to `indrekraag/wa3`, rebranded to "Ilmaradar".
-Verified: both inline scripts `node --check` OK, orphan-ID check clean, no
-dangling references to removed symbols, bridge scripts `py_compile` OK.
+**Status:** Fork from wa2 created 2026-07-05. Live-GPS wiring done, three
+alt-station chips removed, raw data URLs repointed to `indrekraag/wa3`,
+rebranded to "Ilmaradar". Then the **EE↔FI auto-switch** was added
+(warnings + electricity price follow the phone's country) — see
+"Country-specific cards" above. A 4-lens adversarial review found 6 real
+bugs, all fixed: durable `wx.geo.country` persistence, `translateWarning`
+thunder-vs-storm ordering, neutral "no data" warnings for uncovered
+countries, and an honest price-market label on EE fallback.
+
+Verified end-to-end (Playwright, mock GPS): EE/FI/SE all render correctly
+with 0 console errors — EE→Eesti·24%, FI→Soome·25.5%, SE→neutral warnings
++ Eesti-labelled EE price; `translateWarning` unit cases all pass; both
+inline scripts `node --check` OK; orphan-ID check clean; bridge scripts run
+live producing correct multi-zone `nps.json` + country-tagged `emhi.json`.
 
 **Next step:** create the GitHub repo `indrekraag/wa3`, push `main`, enable
 GitHub Pages, let the Actions workflow populate the `data` branch, then
-smoke-test on the actual iPhone (grant location permission on first load).
+smoke-test on the actual iPhone in Finland (grant location on first load).
 
 **Open follow-ups:**
 - App name "Ilmaradar" and the icon wordmark ("MADISE") are placeholders —
   rename if desired (icon wordmark lives in `icons/generate_icons.py`).
 - Consider `watchPosition()` if you want it to track while open.
-- All-Estonia warnings may be noisy; could reverse-geocode the county from
-  GPS and filter to nearby counties instead.
+- To cover more countries: add feeds to `METEOALARM_FEEDS` +
+  `WARN_COUNTRIES`, and (already there) Elering LV/LT zones.
