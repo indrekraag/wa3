@@ -1,0 +1,90 @@
+name: Fetch EMHI observations + electricity prices
+
+# Every 15 min, pull the latest EMHI XML (weather stations + warnings) and
+# the Elering electricity spot prices, and push both as a single rolling
+# commit on a 'data' orphan branch. The PWA reads those files via
+# raw.githubusercontent.com (CORS-open), bypassing EMHI's and Elering's
+# CORS blocks without polluting main's git history. (Prices only change
+# once a day, but piggy-backing on the 15-min cron is cheap and simple.)
+
+on:
+  schedule:
+    # GitHub schedules are best-effort and can be delayed by 5–30 min
+    # during peak load. That's fine — the displayed data is ambient.
+    - cron: '*/15 * * * *'
+  workflow_dispatch: {}
+  # Re-run when the script or workflow itself changes, so first deploy
+  # populates the data branch immediately rather than waiting 15 min.
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/fetch_emhi.py'
+      - 'scripts/fetch_nps.py'
+      - '.github/workflows/emhi.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: emhi-fetch
+  cancel-in-progress: false
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      - name: Fetch EMHI snapshot
+        id: fetch
+        run: |
+          # The script soft-fails (exit 0, no file, wrote=false) on a
+          # transient EMHI/Cloudflare outage so the cron doesn't email.
+          python3 scripts/fetch_emhi.py --out /tmp/emhi.json
+          if [ -f /tmp/emhi.json ]; then echo "--- emhi ---"; cat /tmp/emhi.json; fi
+
+      - name: Fetch electricity prices (Elering)
+        id: nps
+        run: |
+          # Independent soft-fail: a price-feed blip never affects EMHI.
+          python3 scripts/fetch_nps.py --out /tmp/nps.json
+          if [ -f /tmp/nps.json ]; then echo "--- nps ---"; cat /tmp/nps.json; fi
+
+      # Push when EITHER feed produced a fresh file this run. We start from
+      # the EXISTING data branch and overlay only the files written this
+      # run, so a soft-fail on one feed keeps the other's last-good file
+      # (a plain force-push of a fresh orphan branch would drop it).
+      - name: Push to data branch
+        if: steps.fetch.outputs.wrote == 'true' || steps.nps.outputs.wrote == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          tmp=$(mktemp -d)
+          cd "$tmp"
+          git init -q -b data
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git"
+          # Seed from the current data branch so the other feed survives.
+          if git fetch -q --depth 1 origin data; then
+            git reset -q --hard FETCH_HEAD
+          fi
+          [ -f /tmp/emhi.json ] && cp /tmp/emhi.json emhi.json || true
+          [ -f /tmp/nps.json ]  && cp /tmp/nps.json  nps.json  || true
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes to push."; exit 0
+          fi
+          git commit -q -m "data: snapshot $(date -u +%Y-%m-%dT%H:%MZ)"
+          git push -q --force origin data:data
+          echo "✓ Pushed to 'data' branch"
+          echo "  https://raw.githubusercontent.com/${{ github.repository }}/data/emhi.json"
+          echo "  https://raw.githubusercontent.com/${{ github.repository }}/data/nps.json"

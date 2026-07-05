@@ -1,0 +1,13 @@
+.DS_Store
+index_backup_pre_pwa.html
+# Local-only rollback snapshots of index.html (e.g. index_backup_pre_radar_*.html)
+index_backup_*.html
+.venv/
+shots/
+__pycache__/
+*.pyc
+# Local-only data snapshots; live data is published to the 'data' branch
+# by the EMHI workflow and served via raw.githubusercontent.com.
+data/
+# Transient Claude Code scheduler lock — machine-local, never commit
+.claude/scheduled_tasks.lock
