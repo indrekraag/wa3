@@ -1,0 +1,84 @@
+{
+  "source": "EMHI / Estonian Weather Service",
+  "source_url": "https://www.ilmateenistus.ee/ilma_andmed/xml/observations.php",
+  "observation_time": "2026-09-12T18:31:16+00:00",
+  "fetched_at": "2026-09-12T18:31:16.432329+00:00",
+  "stations": {
+    "26124": {
+      "name": "Lääne-Nigula",
+      "wmocode": "26124",
+      "latitude": 58.951083333359826,
+      "longitude": 23.81566666709052,
+      "phenomenon": "Moderate shower",
+      "visibility": 3.0,
+      "precipitations": 0.5,
+      "airpressure": 1015.9,
+      "relativehumidity": 98.6,
+      "airtemperature": 13.6,
+      "winddirection": 189.0,
+      "windspeed": 3.6,
+      "windspeedmax": 4.0,
+      "waterlevel": null,
+      "waterlevel_eh2000": null,
+      "watertemperature": null,
+      "uvindex": null,
+      "sunshineduration": 266.0,
+      "globalradiation": null
+    },
+    "26123": {
+      "name": "Haapsalu",
+      "wmocode": "26123",
+      "latitude": 58.945277777444446,
+      "longitude": 23.55527777777778,
+      "phenomenon": null,
+      "visibility": null,
+      "precipitations": 1.4,
+      "airpressure": 1015.9,
+      "relativehumidity": 97.6,
+      "airtemperature": 14.8,
+      "winddirection": 235.0,
+      "windspeed": 1.7,
+      "windspeedmax": 3.1,
+      "waterlevel": null,
+      "waterlevel_eh2000": null,
+      "watertemperature": null,
+      "uvindex": 0.0,
+      "sunshineduration": null,
+      "globalradiation": -2.438
+    }
+  },
+  "warnings": [
+    {
+      "event": "Wind Level 1",
+      "severity": "Moderate",
+      "areaDesc": "Lake Peipus",
+      "onset": "2026-09-13T00:00:00+00:00",
+      "expires": "2026-09-13T12:00:00+00:00",
+      "urgency": "Expected",
+      "certainty": "Likely",
+      "country": "EE"
+    },
+    {
+      "event": "Strong wind advisory",
+      "severity": "Moderate",
+      "areaDesc": "Perämeren eteläosa, Perämeren pohjoisosa",
+      "onset": "2026-09-13T06:00:00+00:00",
+      "expires": "2026-09-13T12:00:00+00:00",
+      "urgency": "Future",
+      "certainty": "Possible",
+      "country": "FI"
+    },
+    {
+      "event": "Strong wind advisory",
+      "severity": "Moderate",
+      "areaDesc": "Suomenlahden itäosa, Suomenlahden länsiosa, Selkämeren eteläosa, Selkämeren pohjoisosa",
+      "onset": "2026-09-13T00:00:00+00:00",
+      "expires": "2026-09-13T12:00:00+00:00",
+      "urgency": "Future",
+      "certainty": "Possible",
+      "country": "FI"
+    }
+  ],
+  "warnings_source": "MeteoAlarm / Estonian Environment Agency CAP feed",
+  "warnings_scope": "all-Estonia + all-Finland (MeteoAlarm EE+FI, tagged per warning)"
+}
