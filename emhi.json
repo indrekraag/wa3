@@ -1,0 +1,74 @@
+{
+  "source": "EMHI / Estonian Weather Service",
+  "source_url": "https://www.ilmateenistus.ee/ilma_andmed/xml/observations.php",
+  "observation_time": "2026-10-03T17:36:08+00:00",
+  "fetched_at": "2026-10-03T17:36:08.843585+00:00",
+  "stations": {
+    "26124": {
+      "name": "Lääne-Nigula",
+      "wmocode": "26124",
+      "latitude": 58.951083333359826,
+      "longitude": 23.81566666709052,
+      "phenomenon": "Cloudy with clear spells",
+      "visibility": 43.0,
+      "precipitations": 0.0,
+      "airpressure": 1025.2,
+      "relativehumidity": 91.2,
+      "airtemperature": 12.2,
+      "winddirection": 251.0,
+      "windspeed": 3.2,
+      "windspeedmax": 4.4,
+      "waterlevel": null,
+      "waterlevel_eh2000": null,
+      "watertemperature": null,
+      "uvindex": null,
+      "sunshineduration": 49.0,
+      "globalradiation": null
+    },
+    "26123": {
+      "name": "Haapsalu",
+      "wmocode": "26123",
+      "latitude": 58.945277777444446,
+      "longitude": 23.55527777777778,
+      "phenomenon": null,
+      "visibility": null,
+      "precipitations": 0.0,
+      "airpressure": 1025.4,
+      "relativehumidity": 91.1,
+      "airtemperature": 12.4,
+      "winddirection": 246.0,
+      "windspeed": 2.4,
+      "windspeedmax": 3.2,
+      "waterlevel": null,
+      "waterlevel_eh2000": null,
+      "watertemperature": null,
+      "uvindex": 0.0,
+      "sunshineduration": null,
+      "globalradiation": -2.125
+    }
+  },
+  "warnings": [
+    {
+      "event": "Strong wind advisory",
+      "severity": "Moderate",
+      "areaDesc": "Suomenlahden itäosa, Suomenlahden länsiosa, Pohjois-Itämeren itäosa",
+      "onset": "2026-10-04T03:00:00+00:00",
+      "expires": "2026-10-04T14:00:00+00:00",
+      "urgency": "Future",
+      "certainty": "Possible",
+      "country": "FI"
+    },
+    {
+      "event": "Strong wind advisory",
+      "severity": "Moderate",
+      "areaDesc": "Selkämeren pohjoisosa, Merenkurkku, Perämeren eteläosa, Perämeren pohjoisosa",
+      "onset": "2026-10-03T17:10:07+00:00",
+      "expires": "2026-10-03T21:00:00+00:00",
+      "urgency": "Future",
+      "certainty": "Possible",
+      "country": "FI"
+    }
+  ],
+  "warnings_source": "MeteoAlarm / Estonian Environment Agency CAP feed",
+  "warnings_scope": "all-Estonia + all-Finland (MeteoAlarm EE+FI, tagged per warning)"
+}
