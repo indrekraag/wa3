@@ -1,0 +1,284 @@
+{
+  "source": "EMHI / Estonian Weather Service",
+  "source_url": "https://www.ilmateenistus.ee/ilma_andmed/xml/observations.php",
+  "observation_time": "2026-11-14T19:53:50+00:00",
+  "fetched_at": "2026-11-14T19:53:50.274416+00:00",
+  "stations": {
+    "26124": {
+      "name": "Lääne-Nigula",
+      "wmocode": "26124",
+      "latitude": 58.951083333359826,
+      "longitude": 23.81566666709052,
+      "phenomenon": "Few clouds",
+      "visibility": 50.0,
+      "precipitations": 0.0,
+      "airpressure": 1007.6,
+      "relativehumidity": 80.9,
+      "airtemperature": 2.4,
+      "winddirection": 229.0,
+      "windspeed": 3.4,
+      "windspeedmax": 3.8,
+      "waterlevel": null,
+      "waterlevel_eh2000": null,
+      "watertemperature": null,
+      "uvindex": null,
+      "sunshineduration": 73.0,
+      "globalradiation": null
+    },
+    "26123": {
+      "name": "Haapsalu",
+      "wmocode": "26123",
+      "latitude": 58.945277777444446,
+      "longitude": 23.55527777777778,
+      "phenomenon": null,
+      "visibility": null,
+      "precipitations": 0.0,
+      "airpressure": 1007.6,
+      "relativehumidity": 76.0,
+      "airtemperature": 3.2,
+      "winddirection": 242.0,
+      "windspeed": 2.8,
+      "windspeedmax": 4.8,
+      "waterlevel": null,
+      "waterlevel_eh2000": null,
+      "watertemperature": null,
+      "uvindex": 0.0,
+      "sunshineduration": null,
+      "globalradiation": -2.395
+    }
+  },
+  "warnings": [
+    {
+      "event": "Wind Level 1",
+      "severity": "Moderate",
+      "areaDesc": "Lake Peipus",
+      "onset": "2026-11-14T16:00:00+00:00",
+      "expires": "2026-11-15T07:00:00+00:00",
+      "urgency": "Immediate",
+      "certainty": "Observed",
+      "country": "EE"
+    },
+    {
+      "event": "Wind Level 1",
+      "severity": "Moderate",
+      "areaDesc": "Northern Gulf of Riga",
+      "onset": "2026-11-14T16:00:00+00:00",
+      "expires": "2026-11-15T07:00:00+00:00",
+      "urgency": "Immediate",
+      "certainty": "Observed",
+      "country": "EE"
+    },
+    {
+      "event": "Wind Level 1",
+      "severity": "Moderate",
+      "areaDesc": "Northern Baltic Sea",
+      "onset": "2026-11-14T16:00:00+00:00",
+      "expires": "2026-11-14T22:00:00+00:00",
+      "urgency": "Immediate",
+      "certainty": "Observed",
+      "country": "EE"
+    },
+    {
+      "event": "Wind Level 1",
+      "severity": "Moderate",
+      "areaDesc": "Moonsund",
+      "onset": "2026-11-14T16:00:00+00:00",
+      "expires": "2026-11-15T09:00:00+00:00",
+      "urgency": "Immediate",
+      "certainty": "Observed",
+      "country": "EE"
+    },
+    {
+      "event": "Wind Level 1",
+      "severity": "Moderate",
+      "areaDesc": "Pärnu county",
+      "onset": "2026-11-15T05:00:00+00:00",
+      "expires": "2026-11-16T05:00:00+00:00",
+      "urgency": "Expected",
+      "certainty": "Likely",
+      "country": "EE"
+    },
+    {
+      "event": "Wind Level 1",
+      "severity": "Moderate",
+      "areaDesc": "Põlva county",
+      "onset": "2026-11-15T09:00:00+00:00",
+      "expires": "2026-11-16T05:00:00+00:00",
+      "urgency": "Expected",
+      "certainty": "Likely",
+      "country": "EE"
+    },
+    {
+      "event": "Wind Level 1",
+      "severity": "Moderate",
+      "areaDesc": "Port of Tallinn",
+      "onset": "2026-11-15T03:00:00+00:00",
+      "expires": "2026-11-15T21:00:00+00:00",
+      "urgency": "Expected",
+      "certainty": "Likely",
+      "country": "EE"
+    },
+    {
+      "event": "Wind Level 1",
+      "severity": "Moderate",
+      "areaDesc": "Moonsund",
+      "onset": "2026-11-15T18:00:00+00:00",
+      "expires": "2026-11-17T01:00:00+00:00",
+      "urgency": "Future",
+      "certainty": "Likely",
+      "country": "EE"
+    },
+    {
+      "event": "Wind Level 1",
+      "severity": "Moderate",
+      "areaDesc": "Northern Gulf of Riga",
+      "onset": "2026-11-15T17:00:00+00:00",
+      "expires": "2026-11-17T03:00:00+00:00",
+      "urgency": "Future",
+      "certainty": "Likely",
+      "country": "EE"
+    },
+    {
+      "event": "Wind Level 1",
+      "severity": "Moderate",
+      "areaDesc": "Northern Baltic Sea",
+      "onset": "2026-11-15T17:00:00+00:00",
+      "expires": "2026-11-17T01:00:00+00:00",
+      "urgency": "Future",
+      "certainty": "Likely",
+      "country": "EE"
+    },
+    {
+      "event": "Wind Level 1",
+      "severity": "Moderate",
+      "areaDesc": "Eastern Gulf of Finland",
+      "onset": "2026-11-14T22:00:00+00:00",
+      "expires": "2026-11-15T03:00:00+00:00",
+      "urgency": "Expected",
+      "certainty": "Likely",
+      "country": "EE"
+    },
+    {
+      "event": "Wind Level 1",
+      "severity": "Moderate",
+      "areaDesc": "Lake Peipus",
+      "onset": "2026-11-15T07:00:00+00:00",
+      "expires": "2026-11-15T22:00:00+00:00",
+      "urgency": "Expected",
+      "certainty": "Likely",
+      "country": "EE"
+    },
+    {
+      "event": "Wind Level 1",
+      "severity": "Moderate",
+      "areaDesc": "Moonsund",
+      "onset": "2026-11-15T09:00:00+00:00",
+      "expires": "2026-11-15T18:00:00+00:00",
+      "urgency": "Expected",
+      "certainty": "Likely",
+      "country": "EE"
+    },
+    {
+      "event": "Wind Level 1",
+      "severity": "Moderate",
+      "areaDesc": "Northern Baltic Sea",
+      "onset": "2026-11-14T22:00:00+00:00",
+      "expires": "2026-11-15T17:00:00+00:00",
+      "urgency": "Expected",
+      "certainty": "Likely",
+      "country": "EE"
+    },
+    {
+      "event": "Wind Level 1",
+      "severity": "Moderate",
+      "areaDesc": "Western Gulf of Finland",
+      "onset": "2026-11-14T23:00:00+00:00",
+      "expires": "2026-11-15T20:00:00+00:00",
+      "urgency": "Expected",
+      "certainty": "Likely",
+      "country": "EE"
+    },
+    {
+      "event": "Wind Level 1",
+      "severity": "Moderate",
+      "areaDesc": "Western Gulf of Finland",
+      "onset": "2026-11-14T17:00:00+00:00",
+      "expires": "2026-11-14T23:00:00+00:00",
+      "urgency": "Expected",
+      "certainty": "Likely",
+      "country": "EE"
+    },
+    {
+      "event": "Wind Level 1",
+      "severity": "Moderate",
+      "areaDesc": "Northern Gulf of Riga",
+      "onset": "2026-11-15T07:00:00+00:00",
+      "expires": "2026-11-15T17:00:00+00:00",
+      "urgency": "Expected",
+      "certainty": "Likely",
+      "country": "EE"
+    },
+    {
+      "event": "Wind Level 1",
+      "severity": "Moderate",
+      "areaDesc": "Eastern Gulf of Finland",
+      "onset": "2026-11-14T07:00:00+00:00",
+      "expires": "2026-11-14T22:00:00+00:00",
+      "urgency": "Immediate",
+      "certainty": "Observed",
+      "country": "EE"
+    },
+    {
+      "event": "Wind Level 1",
+      "severity": "Moderate",
+      "areaDesc": "Eastern Gulf of Finland",
+      "onset": "2026-11-15T03:00:00+00:00",
+      "expires": "2026-11-15T21:00:00+00:00",
+      "urgency": "Expected",
+      "certainty": "Likely",
+      "country": "EE"
+    },
+    {
+      "event": "Warning for gale-force winds",
+      "severity": "Moderate",
+      "areaDesc": "Suomenlahden itäosa",
+      "onset": "2026-11-14T18:08:48+00:00",
+      "expires": "2026-11-14T22:00:00+00:00",
+      "urgency": "Future",
+      "certainty": "Likely",
+      "country": "FI"
+    },
+    {
+      "event": "Warning for gale-force winds",
+      "severity": "Moderate",
+      "areaDesc": "Suomenlahden itäosa, Suomenlahden länsiosa, Pohjois-Itämeren itäosa",
+      "onset": "2026-11-15T03:00:00+00:00",
+      "expires": "2026-11-15T22:00:00+00:00",
+      "urgency": "Future",
+      "certainty": "Likely",
+      "country": "FI"
+    },
+    {
+      "event": "Warning for gale-force winds",
+      "severity": "Moderate",
+      "areaDesc": "Pohjois-Itämeren länsiosa, Ahvenanmeri, Saaristomeri, Selkämeren eteläosa, Selkämeren pohjoisosa, Merenkurkku, Perämeren eteläosa, Perämeren pohjoisosa",
+      "onset": "2026-11-15T00:00:00+00:00",
+      "expires": "2026-11-15T22:00:00+00:00",
+      "urgency": "Future",
+      "certainty": "Likely",
+      "country": "FI"
+    },
+    {
+      "event": "Traffic weather warning",
+      "severity": "Moderate",
+      "areaDesc": "Kainuu, Pudasjärvi, Taivalkoski, Kuusamo, Kemi, Tornio, Keminmaa, Tervola, Simo, Ranua, Posio, Salla, Kemijärvi, Rovaniemi, Ylitornio, Pello",
+      "onset": "2026-11-15T03:00:00+00:00",
+      "expires": "2026-11-15T10:00:00+00:00",
+      "urgency": "Future",
+      "certainty": "Possible",
+      "country": "FI"
+    }
+  ],
+  "warnings_source": "MeteoAlarm / Estonian Environment Agency CAP feed",
+  "warnings_scope": "all-Estonia + all-Finland (MeteoAlarm EE+FI, tagged per warning)"
+}
