@@ -1,0 +1,224 @@
+{
+  "source": "EMHI / Estonian Weather Service",
+  "source_url": "https://www.ilmateenistus.ee/ilma_andmed/xml/observations.php",
+  "observation_time": "2026-11-21T07:28:29+00:00",
+  "fetched_at": "2026-11-21T07:28:29.217401+00:00",
+  "stations": {
+    "26124": {
+      "name": "Lääne-Nigula",
+      "wmocode": "26124",
+      "latitude": 58.951083333359826,
+      "longitude": 23.81566666709052,
+      "phenomenon": "Variable clouds",
+      "visibility": 50.0,
+      "precipitations": 0.0,
+      "airpressure": 989.1,
+      "relativehumidity": 98.1,
+      "airtemperature": 0.7,
+      "winddirection": 135.0,
+      "windspeed": 3.4,
+      "windspeedmax": 4.2,
+      "waterlevel": null,
+      "waterlevel_eh2000": null,
+      "watertemperature": null,
+      "uvindex": null,
+      "sunshineduration": 4.0,
+      "globalradiation": null
+    },
+    "26123": {
+      "name": "Haapsalu",
+      "wmocode": "26123",
+      "latitude": 58.945277777444446,
+      "longitude": 23.55527777777778,
+      "phenomenon": null,
+      "visibility": null,
+      "precipitations": 0.0,
+      "airpressure": 988.7,
+      "relativehumidity": 95.4,
+      "airtemperature": 2.0,
+      "winddirection": 140.0,
+      "windspeed": 2.2,
+      "windspeedmax": 2.9,
+      "waterlevel": null,
+      "waterlevel_eh2000": null,
+      "watertemperature": null,
+      "uvindex": 0.0,
+      "sunshineduration": null,
+      "globalradiation": 6.494
+    }
+  },
+  "warnings": [
+    {
+      "event": "Wind Level 1",
+      "severity": "Moderate",
+      "areaDesc": "Western Gulf of Finland",
+      "onset": "2026-11-21T16:00:00+00:00",
+      "expires": "2026-11-22T04:00:00+00:00",
+      "urgency": "Expected",
+      "certainty": "Likely",
+      "country": "EE"
+    },
+    {
+      "event": "Glazed ice Level 1",
+      "severity": "Moderate",
+      "areaDesc": "Rapla county",
+      "onset": "2026-11-21T00:00:00+00:00",
+      "expires": "2026-11-23T22:00:00+00:00",
+      "urgency": "Immediate",
+      "certainty": "Observed",
+      "country": "EE"
+    },
+    {
+      "event": "Wind Level 1",
+      "severity": "Moderate",
+      "areaDesc": "Northern Gulf of Riga",
+      "onset": "2026-11-21T16:00:00+00:00",
+      "expires": "2026-11-21T22:00:00+00:00",
+      "urgency": "Future",
+      "certainty": "Possible",
+      "country": "EE"
+    },
+    {
+      "event": "Wind Level 1",
+      "severity": "Moderate",
+      "areaDesc": "Northern Baltic Sea",
+      "onset": "2026-11-21T21:00:00+00:00",
+      "expires": "2026-11-23T16:00:00+00:00",
+      "urgency": "Future",
+      "certainty": "Possible",
+      "country": "EE"
+    },
+    {
+      "event": "Wind Level 1",
+      "severity": "Moderate",
+      "areaDesc": "Northern Gulf of Riga",
+      "onset": "2026-11-21T07:00:00+00:00",
+      "expires": "2026-11-21T16:00:00+00:00",
+      "urgency": "Expected",
+      "certainty": "Likely",
+      "country": "EE"
+    },
+    {
+      "event": "Wind Level 1",
+      "severity": "Moderate",
+      "areaDesc": "Northern Baltic Sea",
+      "onset": "2026-11-21T05:00:00+00:00",
+      "expires": "2026-11-21T17:00:00+00:00",
+      "urgency": "Expected",
+      "certainty": "Likely",
+      "country": "EE"
+    },
+    {
+      "event": "Wind Level 1",
+      "severity": "Moderate",
+      "areaDesc": "Northern Baltic Sea",
+      "onset": "2026-11-21T02:00:00+00:00",
+      "expires": "2026-11-21T21:00:00+00:00",
+      "urgency": "Future",
+      "certainty": "Possible",
+      "country": "EE"
+    },
+    {
+      "event": "Storm warning",
+      "severity": "Severe",
+      "areaDesc": "Ahvenanmeri",
+      "onset": "2026-11-22T04:00:00+00:00",
+      "expires": "2026-11-22T22:00:00+00:00",
+      "urgency": "Future",
+      "certainty": "Possible",
+      "country": "FI"
+    },
+    {
+      "event": "Wave height warning",
+      "severity": "Severe",
+      "areaDesc": "Ahvenanmeri, Selkämeren eteläosa, Selkämeren pohjoisosa",
+      "onset": "2026-11-21T17:00:00+00:00",
+      "expires": "2026-11-22T22:00:00+00:00",
+      "urgency": "Future",
+      "certainty": "Possible",
+      "country": "FI"
+    },
+    {
+      "event": "Warning for gale-force winds",
+      "severity": "Moderate",
+      "areaDesc": "Pohjois-Itämeren länsiosa, Selkämeren eteläosa, Selkämeren pohjoisosa, Merenkurkku, Perämeren eteläosa",
+      "onset": "2026-11-21T22:00:00+00:00",
+      "expires": "2026-11-23T09:00:00+00:00",
+      "urgency": "Future",
+      "certainty": "Likely",
+      "country": "FI"
+    },
+    {
+      "event": "Warning for gale-force winds",
+      "severity": "Moderate",
+      "areaDesc": "Selkämeren pohjoisosa, Merenkurkku, Perämeren eteläosa",
+      "onset": "2026-11-21T09:00:00+00:00",
+      "expires": "2026-11-21T22:00:00+00:00",
+      "urgency": "Future",
+      "certainty": "Likely",
+      "country": "FI"
+    },
+    {
+      "event": "Warning for gale-force winds",
+      "severity": "Moderate",
+      "areaDesc": "Selkämeren eteläosa, Perämeren pohjoisosa",
+      "onset": "2026-11-21T11:00:00+00:00",
+      "expires": "2026-11-21T22:00:00+00:00",
+      "urgency": "Future",
+      "certainty": "Likely",
+      "country": "FI"
+    },
+    {
+      "event": "Warning for gale-force winds",
+      "severity": "Moderate",
+      "areaDesc": "Suomenlahden länsiosa, Pohjois-Itämeren itäosa, Saaristomeri, Perämeren pohjoisosa",
+      "onset": "2026-11-21T22:00:00+00:00",
+      "expires": "2026-11-23T09:00:00+00:00",
+      "urgency": "Future",
+      "certainty": "Likely",
+      "country": "FI"
+    },
+    {
+      "event": "Warning for gale-force winds",
+      "severity": "Moderate",
+      "areaDesc": "Pohjois-Itämeren länsiosa, Ahvenanmeri",
+      "onset": "2026-11-21T06:55:22+00:00",
+      "expires": "2026-11-21T15:00:00+00:00",
+      "urgency": "Future",
+      "certainty": "Likely",
+      "country": "FI"
+    },
+    {
+      "event": "Traffic weather warning",
+      "severity": "Moderate",
+      "areaDesc": "Varsinais-Suomi, Satakunta, Kanta-Häme, Päijät-Häme, Pirkanmaa, Keski-Suomi, Etelä-Savo, Pohjois-Savo, Pohjois-Karjala, Etelä-Pohjanmaa, Kainuu",
+      "onset": "2026-11-21T22:00:00+00:00",
+      "expires": "2026-11-22T22:00:00+00:00",
+      "urgency": "Future",
+      "certainty": "Likely",
+      "country": "FI"
+    },
+    {
+      "event": "Traffic weather warning",
+      "severity": "Moderate",
+      "areaDesc": "Varsinais-Suomi, Uusimaa, Kanta-Häme, Päijät-Häme, Kymenlaakso",
+      "onset": "2026-11-21T06:55:22+00:00",
+      "expires": "2026-11-21T08:00:00+00:00",
+      "urgency": "Future",
+      "certainty": "Possible",
+      "country": "FI"
+    },
+    {
+      "event": "Traffic weather warning",
+      "severity": "Moderate",
+      "areaDesc": "Keski-Suomi, Pohjois-Savo, Pohjois-Karjala, Etelä-Pohjanmaa, Pohjanmaa, Keski-Pohjanmaa, Kainuu, Pohjois-Pohjanmaan Eteläosa",
+      "onset": "2026-11-21T06:55:22+00:00",
+      "expires": "2026-11-21T22:00:00+00:00",
+      "urgency": "Future",
+      "certainty": "Likely",
+      "country": "FI"
+    }
+  ],
+  "warnings_source": "MeteoAlarm / Estonian Environment Agency CAP feed",
+  "warnings_scope": "all-Estonia + all-Finland (MeteoAlarm EE+FI, tagged per warning)"
+}
