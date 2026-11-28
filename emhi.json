@@ -1,0 +1,134 @@
+{
+  "source": "EMHI / Estonian Weather Service",
+  "source_url": "https://www.ilmateenistus.ee/ilma_andmed/xml/observations.php",
+  "observation_time": "2026-11-28T10:59:53+00:00",
+  "fetched_at": "2026-11-28T10:59:53.353102+00:00",
+  "stations": {
+    "26124": {
+      "name": "Lääne-Nigula",
+      "wmocode": "26124",
+      "latitude": 58.951083333359826,
+      "longitude": 23.81566666709052,
+      "phenomenon": "Cloudy with clear spells",
+      "visibility": 50.0,
+      "precipitations": 0.0,
+      "airpressure": 1042.4,
+      "relativehumidity": 86.9,
+      "airtemperature": -1.3,
+      "winddirection": 171.0,
+      "windspeed": 2.8,
+      "windspeedmax": 3.2,
+      "waterlevel": null,
+      "waterlevel_eh2000": null,
+      "watertemperature": null,
+      "uvindex": null,
+      "sunshineduration": 11.0,
+      "globalradiation": null
+    },
+    "26123": {
+      "name": "Haapsalu",
+      "wmocode": "26123",
+      "latitude": 58.945277777444446,
+      "longitude": 23.55527777777778,
+      "phenomenon": null,
+      "visibility": null,
+      "precipitations": 0.0,
+      "airpressure": 1042.5,
+      "relativehumidity": 87.1,
+      "airtemperature": -0.6,
+      "winddirection": 193.0,
+      "windspeed": 1.6,
+      "windspeedmax": 2.2,
+      "waterlevel": null,
+      "waterlevel_eh2000": null,
+      "watertemperature": null,
+      "uvindex": 0.1,
+      "sunshineduration": null,
+      "globalradiation": 61.38
+    }
+  },
+  "warnings": [
+    {
+      "event": "Wind Level 1",
+      "severity": "Moderate",
+      "areaDesc": "Lake Peipus",
+      "onset": "2026-11-28T23:00:00+00:00",
+      "expires": "2026-11-29T15:00:00+00:00",
+      "urgency": "Expected",
+      "certainty": "Likely",
+      "country": "EE"
+    },
+    {
+      "event": "Wind Level 1",
+      "severity": "Moderate",
+      "areaDesc": "Western Gulf of Finland",
+      "onset": "2026-11-29T10:00:00+00:00",
+      "expires": "2026-11-30T18:00:00+00:00",
+      "urgency": "Expected",
+      "certainty": "Likely",
+      "country": "EE"
+    },
+    {
+      "event": "Wind Level 1",
+      "severity": "Moderate",
+      "areaDesc": "Northern Baltic Sea",
+      "onset": "2026-11-29T09:00:00+00:00",
+      "expires": "2026-11-29T13:00:00+00:00",
+      "urgency": "Expected",
+      "certainty": "Likely",
+      "country": "EE"
+    },
+    {
+      "event": "Warning for gale-force winds",
+      "severity": "Moderate",
+      "areaDesc": "Suomenlahden länsiosa",
+      "onset": "2026-11-29T09:00:00+00:00",
+      "expires": "2026-11-29T15:00:00+00:00",
+      "urgency": "Future",
+      "certainty": "Possible",
+      "country": "FI"
+    },
+    {
+      "event": "Warning for gale-force winds",
+      "severity": "Moderate",
+      "areaDesc": "Pohjois-Itämeren itäosa, Pohjois-Itämeren länsiosa, Ahvenanmeri, Selkämeren eteläosa, Selkämeren pohjoisosa, Merenkurkku, Perämeren eteläosa",
+      "onset": "2026-11-29T09:00:00+00:00",
+      "expires": "2026-11-29T22:00:00+00:00",
+      "urgency": "Future",
+      "certainty": "Likely",
+      "country": "FI"
+    },
+    {
+      "event": "Traffic weather warning",
+      "severity": "Moderate",
+      "areaDesc": "Varsinais-Suomi, Satakunta, Pirkanmaa, Keski-Suomi, Etelä-Pohjanmaa, Pohjanmaa, Keski-Pohjanmaa",
+      "onset": "2026-11-28T09:21:47+00:00",
+      "expires": "2026-11-28T21:00:00+00:00",
+      "urgency": "Future",
+      "certainty": "Possible",
+      "country": "FI"
+    },
+    {
+      "event": "Warning for gale-force winds",
+      "severity": "Moderate",
+      "areaDesc": "Selkämeren eteläosa, Selkämeren pohjoisosa",
+      "onset": "2026-11-28T09:21:47+00:00",
+      "expires": "2026-11-28T18:00:00+00:00",
+      "urgency": "Future",
+      "certainty": "Likely",
+      "country": "FI"
+    },
+    {
+      "event": "Traffic weather warning",
+      "severity": "Moderate",
+      "areaDesc": "Pohjois-Savo, Pohjois-Karjala, Kainuu, Pohjois-Pohjanmaan Eteläosa",
+      "onset": "2026-11-29T04:00:00+00:00",
+      "expires": "2026-11-29T16:00:00+00:00",
+      "urgency": "Future",
+      "certainty": "Possible",
+      "country": "FI"
+    }
+  ],
+  "warnings_source": "MeteoAlarm / Estonian Environment Agency CAP feed",
+  "warnings_scope": "all-Estonia + all-Finland (MeteoAlarm EE+FI, tagged per warning)"
+}
